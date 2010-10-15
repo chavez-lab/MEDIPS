@@ -1,0 +1,50 @@
+useDynLib(MEDIPS)
+exportPattern("^[[:alpha:]]+")
+exportMethods(
+    "bin_size",
+    "calcurve_mean_coupling",
+    "calcurve_mean_signals",
+    "calcurve_var",
+    "cali_chr",
+    "chr_lengths",
+    "chr_names",
+    "distFile",
+    "distFunction",
+    "extend",
+    "fragmentLength",
+    "genome_CF",
+    "genome_chr",
+    "genome_name",
+    "genome_norm",
+    "genome_pos",
+    "genome_raw",
+    "intercept",
+    "number_pattern",
+    "number_regions",
+    "pattern_chr",
+    "pattern_pos",
+    "regions_chr",
+    "regions_start",
+    "regions_stop",
+    "regions_strand",
+    "sample_name",
+    "seq_pattern",
+    "show",
+    "slope"    
+)
+exportClasses(
+    "MEDIPSset" 
+)
+importClassesFrom(methods, character, numeric)
+importMethodsFrom(Biostrings, alphabetFrequency, countPDict, matchPattern, PDict, reverseComplement, vcountPattern)
+importMethodsFrom(BSgenome, getSeq)
+importMethodsFrom(IRanges, cor, end, quantile, ranges, "ranges<-", resize, restrict, space, start, values, var, width)
+importMethodsFrom(methods, show)
+importFrom(Biostrings, DNAString, DNAStringSet)
+importFrom(BSgenome, bsapply)
+importFrom(graphics, abline, legend, lines, plot)
+importFrom(gtools, mixedsort)
+importFrom(IRanges, IRanges, RangedData)
+importFrom(methods, "@<-", new)
+importFrom(stats, lm, t.test, wilcox.test)
+importFrom(utils, read.table, setTxtProgressBar, txtProgressBar,write.table)

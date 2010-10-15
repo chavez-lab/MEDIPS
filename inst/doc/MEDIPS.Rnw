@@ -1,0 +1,1285 @@
+%\VignetteIndexEntry{MEDIPS}
+%\VignetteKeywords{}
+%\VignetteDepends{MEDIPS, BSgenome, BSgenome.Hsapiens.UCSC.hg19}
+%\VignettePackage{MEDIPS}
+
+\documentclass[a4paper]{article}
+
+\usepackage{natbib}
+
+\title{MEDIPS Tutorial}
+\author{Lukas Chavez}
+
+\begin{document}
+
+\maketitle
+
+%\pagenumbering{roman}
+
+\tableofcontents
+
+\section{Introduction}
+MEDIPS was developed for analyzing data derived from methylated DNA immunoprecipitation (MeDIP) experiments \citep{Weber2005a} followed by sequencing (MeDIP-seq).
+Nevertheless, MEDIPS may be applied to other immunoprecipitation based methylation analyses (e.g. MBD-seq), and selected functionalities like the saturation analysis may be applied to other types of sequencing data (e.g. ChIP-seq).
+MEDIPS adresses several aspects in the context of MeDIP-seq data analysis. These are: 
+
+\begin{itemize}
+\item 
+estimating the reproducibility for obtaining full genome methylation profiles with respect to the total number of given short reads and to the size of the reference genome, 
+\item 
+analyzing the coverage of genome wide DNA sequence patterns (e.g. CpGs) by the given reads,
+\item 
+calculating an CpG enrichment factor as a quality control for the immunoprecipitation,
+\item 
+calculating genome wide MeDIP-seq signal densities at a user specified resolution,
+\item 
+calculating genome wide sequence pattern densities (e.g. CpGs) at a user specified resolution,
+\item 
+plotting of calibration plots as a data quality check and for a visual inspection of the dependency between local sequence pattern (e.g. CpG) densities and MeDIP signals,
+\item 
+normalization of MeDIP-seq data with respect to local sequence pattern (e.g. CpG) densities,
+\item 
+summarized methylation values for genome wide windows of a specified length or for user supplied regions of interest (ROIs),
+\item 
+calculating differentially methylated regions on raw or normalized data comparing two sets of MeDIP-seq data and with respect to Input data (if available), and
+\item 
+export of raw and normalized data for visualization in common genome browsers (e.g. the UCSC genome browser).
+\end{itemize} 
+
+MEDIPS starts directly where the mapping tools stop and can be used for any genome of interest, limited only by the available genomes within the Bioconductor \texttt{BSgenome} package.
+
+
+
+
+
+\section{Preparations}
+
+In order to execute MEDIPS, you need to have some other packages installed in your R library. 
+These are \texttt{BSgenome} and \texttt{gtools}, as well as the packages they depend on.
+You can check this, by starting R and typing 
+
+<<echo=TRUE, eval=F>>=
+packageDescription("BSgenome")
+packageDescription("gtools")
+@
+
+R will inform you in case you do not have these packages installed.
+In case you do not have these necessary packages installed, start R and try typing 
+
+<<echo=TRUE, eval=F>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("BSgenome")
+biocLite("gtools")
+@
+Please be aware of having the latest BSgenome version installed (>1.14.2).
+The version number is returned by the \texttt{packageDescription()} command.
+Please note, there is a bug in R distributions <=2.10.1 that sometimes causes errors when interacting with the BSgenome package.
+This bug should be fixed in R versions >2.11.0. 
+
+Next, it is necessary to install the MEDIPS package into your R environment.
+Start R and enter:
+
+<<echo=TRUE, eval=F>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("MEDIPS")
+@
+
+Please note, MEDIPS became available on BioC 2.7 that is designed to work with R.2.12. 
+Therefore, installation of the MEDIPS package by \texttt{biocLite()} only works on R >=2.12.0.
+
+\begin{sloppypar}
+In order to reproduce the presented MEDIPS workflow, the package includes the example data sets 
+\texttt{MeDIP\_hESCs\_chr22.txt} (17M), 
+\texttt{MeDIP\_DE\_chr22.txt} (22M), and
+\texttt{Input\_StemCells\_chr22.txt} (8.8M)
+in the \texttt{extdata} subdirectory of the MEDIPS package.
+
+The files contain genomic regions from chromosome 22 only, as covered by short reads obtained from a MeDIP experiment of human embryonic stem cells (hESCs), 
+a MeDIP experiment of differentiated hESCs (definitive endoderm, DE), and of Input experiments from hESCs and DE \citep{Chavez2010}. 
+\end{sloppypar}
+
+As input, MEDIPS requires tab-separated files without headers containing four columns:
+\begin{itemize}
+\item 
+the first coulumn is of type character and contains the chromosome of the region (e.g. chr1)
+\item 
+the second column is of type numeric and contains the start position of the mapped read
+\item 
+the third column is of type numeric and contains the stop position of the mapped read
+\item 
+the fourth column is of type character and contains the strand information of the mapped read
+\end{itemize} 
+
+Each row represents a mapped read. 
+These informations can be extracted from the output file(s) of common mapping tools. 
+MEDIPS counts chromosome sequence positions starting at 1. 
+Some alignment tools output the mapped regions by interpreting the first base of a chromosome as 0.
+MEDIPS requires one input file for each condition that has to be analyzed.
+Region informations from several mapping results have to be pooled into one file.
+Furthermore, it might be worthwhile to filter out some mapped reads of low quality or to exclude artifical short read pile-ups from the results of the mapping procedure. 
+Please note, any such data pooling, further filtering or correction for the start and stop positions has to be done by yourself before using MEDIPS.
+
+Next, you need to have your genome of interest available. As soon as you have the BSgenome package installed and the library loaded using 
+
+<<echo=T, eval=T, results=hide>>=
+library("BSgenome")
+@
+you can list all available genomes by typing
+<<echo=TRUE, eval=T>>=
+available.genomes()
+@
+
+In the given example, we mapped the short reads against the human genome build hg19. 
+Therefore, we download and install this genome build:
+
+<<echo=TRUE, eval=F>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("BSgenome.Hsapiens.UCSC.hg19")
+@
+This takes some time, but has to be done only once for each necessary reference genome.
+
+
+
+
+
+
+\section{MEDIPS Workflow}
+\subsection{Create a MEDIPS SET from the input file}
+First, you have to load MEDIPS into your R environment. 
+Herewith, the dependent libraries \texttt{BSgenome} and \texttt{gtools} as well as the packages they depend on will be loaded.
+
+<<echo=T, eval=T, results=hide>>=
+library(MEDIPS)
+@
+
+In the given example, we mapped the short reads against the human genome build hg19. 
+Therefore, we load the pre-installed (see chapter 2) hg19 library:
+
+<<echo=T, eval=T, results=hide>>=
+library(BSgenome.Hsapiens.UCSC.hg19)
+@
+
+Next, a MEDIPS SET is created by reading the input file. 
+This is performed by the \texttt{MEDIPS.readAlignedSequences()} function. 
+When calling this function, it is necessary to state the reference genome build and your input file.
+In case you know the number of rows within your input file, you can also specify the \texttt{numrows} parameter. This will accelerate the reading of your file. 
+Otherwise just skip the \texttt{numrows} parameter. 
+
+In this manual, we are using example data located in the \texttt{extdata} subdirectory of the MEDIPS package.
+Therefore, we have to point to the input example files like:
+
+<<echo=T, results=hide, eval=T>>=
+file=system.file("extdata", "MeDIP_hESCs_chr22.txt", package="MEDIPS")
+@
+
+In the example \texttt{MeDIP\_hESCs\_chr22.txt} file, there are 672866 regions (here, only chromosome 22 is included).
+Therefore, we can now read the example file by typing:
+
+<<echo=T, results=hide, eval=T>>=
+CONTROL.SET=MEDIPS.readAlignedSequences(BSgenome="BSgenome.Hsapiens.UCSC.hg19", file=file, numrows=672866)
+@
+
+Typically, you will execute the function by pointing directly to your input file using the \texttt{file} parameter.
+Here, you can also state the full directory path to your input file together with the file name.
+
+MEDIPS now created a MEDIPS SET from the input. 
+The current content of a MEDIPS SET can be viewed at any time by typing the name of your MEDIPS SET object.
+<<echo=TRUE, eval=T>>=
+CONTROL.SET
+@
+
+After reading the input file, the MEDIPS SET contains only information about the input regions, like the input file name, 
+the dependent organism, the chromosomes included in the input file, the length of the included chromosomes (automatically loaded), the number of regions, 
+and the start, stop and strand informations of the regions. All further slots, for example for the weighting parameters and normalized data 
+are still empty and will be filled during the workflow.
+
+
+
+
+
+\subsection{Creating the Genome Vector and Export of RPM Signals}
+Based on the given regions, a genome-wide coverage has to be calculated.
+In order to calculate the genome wide short read coverage, the user has to specify a targeted data resolution using the parameter \texttt{bin\_size} (default: 50bp).
+In principle, a \texttt{bin\_size}=1 can be specified. Because the resolution of MeDIP-seq data is restricted by the size of the sonicated DNA fragments after amplification and size selection (that often is between 0.2-1kb), 
+it might not be necessary to specify very small bin sizes. Moreover, the smaller the bin size, the higher the need for memory of your computer and the higher the runtime will be.
+We consider a bin size of 50bp as a reasonable compromise on data resolution and computational costs.
+
+Each chromosome inside the MEDIPS SET will then be divided into bins of size 50bp and the short read coverage will be calculated on this resolution.
+In the following, we call the bin representation of the genome the genome vector. 
+
+Moreover, short reads generated by modern-day sequencers do not represent the full DNA fragments but are of shorter length (e.g. 36bp). 
+Therefore, a smoothing of the data is recommended by extending the reads. This can be achieved by setting the parameter \texttt{extend} (default: 400bp).
+With this, each region is extended to a length of 400bp either along the + or along the - direction as specified by the dependent strand information.
+The \texttt{extend} value will not be added to the given length of the short reads but the final length of the extended reads will be the length as specified by the \texttt{extend} parameter.
+
+You can create the genome vector by typing
+
+<<echo=TRUE, results=hide, eval=T>>=
+CONTROL.SET=MEDIPS.genomeVector(data=CONTROL.SET, bin_size=50, extend=400)
+@
+
+For each pre-defined genomic bin, the genome vector stores the number of provided overlapping extended short reads and these are interpreted as the raw MeDIP-seq signals. 
+After having called the \texttt{MEDIPS.genomeVector} function, the slots of the MEDIPS SET associated to the genome vector are occupied. 
+For example, there is a slot that contains the raw signals for each genomic bin. 
+
+Based on the total number of provided short reads (\texttt{n}), the raw MeDIP-seq signals can be transformed into a reads per million (rpm) format
+in order to assure that coverage profiles derived from different biological samples are comparable, although generated from differing amounts of short reads.
+Let $x_{bin_{i}}$ be the raw MeDIP-seq signal of the genomic bin \texttt{i}, where \texttt{i=1,...,m} and \texttt{m} is the total number of genomic bins, 
+then the \texttt{rpm} value of the genomic bin is simply defined as:
+
+\begin{center}
+\texttt{$rpm_{bin_{i}}$ = $\frac{\texttt{$x_{bin_{i}}$}\cdot\texttt{10}^\texttt{6}}{\texttt{n}}$}
+\end{center}
+
+It is already possible to export the raw signals in a reads per million (rpm) format as a wiggle (WIG) file by typing:
+
+<<echo=TRUE, eval=F>>=
+MEDIPS.exportWIG(file="output.rpm.control.WIG", data=CONTROL.SET, raw=T, descr="hESCs.rpm")
+@
+
+At this point, it is necessary to set the parameter \texttt{raw}=T. 
+Otherwise, the export function tries to write out the normalized data that does not exist yet.
+The \texttt{descr} parameter contains an arbitrary description for the wiggle file and will be visualized by a suitable genome browser. 
+It is recommended to gzip the WIG file before you upload it to e.g. the UCSC browser.
+
+
+
+
+
+\subsection{Saturation Analysis}
+The saturation analysis addresses the question, whether the number of input regions is sufficient to generate a saturated and reproducible methylation profile of the reference genome.
+The main idea is that an insufficent number of short reads will not result in a saturated methylation profile. 
+Only if there is a sufficient number of short reads, the resulting genome wide methylation profile will be reproducible by another independent set of a similar number of short reads.
+
+You can start the saturation analysis by typing
+
+<<echo=TRUE, results=hide, eval=T>>=
+sr.control=MEDIPS.saturationAnalysis(data=CONTROL.SET, bin_size=50, extend=400, no_iterations=10, no_random_iterations=1)
+@
+
+For the saturation analysis, the total set of available regions is divided into two distinct random sets (\texttt{A} and \texttt{B}) of equal size.
+In our example, both sets \texttt{A} and \texttt{B} will contain 336433 randomly selected regions.
+Both sets \texttt{A} and \texttt{B} are again divided into random subsets of equal size where the number of subsets is determined by the parameter \texttt{no\_iterations} (default=10). 
+In our example, each subset of \texttt{A} $(\mathrm{A_1}, \mathrm{A_2}, .., \mathrm{A_{10}})$ and of \texttt{B} $(\mathrm{B_1}, \mathrm{B_2}, .., \mathrm{B_{10}})$ will contain approx. 33643 randomly selected reads.
+For each set, \texttt{A} and \texttt{B}, the saturation analysis iteratively selects an increasing number of subsets and creates according genome vectors as described in section 3.2.
+Here, the parameters \texttt{bin\_size} and \texttt{extend} fulfill the same tasks as described in section 3.2.
+In case, these parameters remain un-specified, MEDIPS accesses the parameter settings as specified previously for generating the genome vector.  
+
+In each iteration step, the resulting genome vectors for the subsets of \texttt{A} and \texttt{B} are compared using pearson correlation. 
+As the number of considered regions increases during each iteration step, it is assumed that the resulting genome vectors become more similar, 
+a dependency that is expressed by an increased correlation. 
+
+Because such a saturation analysis can be performed on two independent sets of short reads only, a true saturation can only be calculated for half of the available short reads.
+As it is of interest to examin the reproducibility of the MeDIP-seq experiment for the total set of available short reads, the saturation analysis is always followed by an estimated saturation analysis.
+For the estimated saturation analysis, the full set of given regions is doubled by considering each region twice and then the described saturation analysis is performed on this artificially doubled set of regions (see also Supplementary Methods in \citep{Chavez2010}).
+
+The saturation analysis does not modify the MEDIPS SET object but the results are stored at the specified saturation results object (here \texttt{sr.control}).
+The results of the saturation and of the estimated saturation analysis can be viewed by typing
+<<echo=TRUE, eval=T>>=
+sr.control
+@
+
+The maximal obtained correlation of the saturation analysis is stored at the \texttt{maxTruCor} slot 
+and the maximal obtained correlation of the estimated saturation analysis is stored at the \texttt{maxEstCor} slot of the saturation results object 
+(first column: total number of considered reads, second column: obtained correlation).
+The results of each iteration step are stored in the \texttt{distinctSets} and \texttt{estimation} slots for the saturation and estimated saturation analysis, respectively 
+(first column: total number of considered reads, second column: obtained correlation).
+
+These results can be visualized by typing
+<<echo=TRUE, fig=TRUE, eval=T>>=
+MEDIPS.plotSaturation(sr.control)
+@
+
+Because the artificially doubled set of short reads, as utilized for the estimated saturation analysis, does not represent a true outcome of a MeDIP-seq experiment, the calculated correlations will overestimate the true reproducibility.
+It is assumed that the true correlation for the full set of available short reads will be between the results of the true (0.89) and of the estimated (0.94) saturation analyis.     
+
+The saturation analysis assists for rating whether the costs of additional sequencing runs are in proportion to the gain in quality of the reconstructed methylome.
+Please note, the results of the saturation analysis are dependent on the size of the examined reference genome (here, only the chromosome 22 is considered).
+
+Further parameters that can be specified for the saturation analysis are:
+\begin{itemize}
+\item 
+\texttt{no\_random\_iterations}: methods that randomly select data entries may be processed several times in order to obtain more stable results. 
+By specifying the \texttt{no\_random\_iterations} parameter (default=1) it is possible to run the saturation analysis several times. 
+The final results returned to the saturation results object are the averaged results of all the random iteration steps.  
+\item 
+\texttt{empty\_bins}: can be either TRUE or FALSE (default TRUE). This parameter affects the way of calculating correlations between the resulting genome vectors. 
+If there occur genomic bins which contain no overlapping regions, neither from the subsets of \texttt{A} nor from the subsets of \texttt{B}, 
+these bins will be neglected when the paramter is set to FALSE.
+\item 
+\texttt{rank}: can be either TRUE or FALSE (default FALSE). This parameter also effects the way of calculating correlations between the resulting genome vectors.
+If \texttt{rank} is set to TRUE, the correlation will be calculated for the ranks of the bins instead of considering the counts.
+Setting this parameter to TRUE is a more robust approach that reduces the effect of possible occuring outliers (these are bins with a very high number of overlapping regions) to the correlation.   
+\end{itemize} 
+
+
+
+
+
+\subsection{Receiving DNA Sequence Pattern Positions}
+The idea of a MeDIP experiment is to identify methylated cytosins.
+For this, an antibody is used that recognizes methylated cytosines.
+However, it has been shown \citep{Down2008}, \citep{Pelizzola2008} that MeDIP signals scale with local densities of CpGs and are not necessarily influenced by only methylated cytosines.
+In order to integrate the information about CpG densities into the following analysis, it is necessary to identify the genomic positions of all CpGs.
+This can be achieved by typing
+
+<<echo=TRUE, results=hide, eval=T>>=
+CONTROL.SET=MEDIPS.getPositions(data=CONTROL.SET, pattern="CG")
+@
+
+MEDIPS returns all start positions of CpGs on the plus strand of the reference genome.
+As the CG pattern is reverse complementary, it is only necessary to scan the plus strand.
+The pattern dependent slots of the MEDIPS SET object now store the necessary informations.
+(Have a look by just typing the name of your MEDIPS SET object).
+In principle, it is possible to identify the positions of any other sequence pattern.
+For example, Lister and colleagues \citep{Lister2009} have shown that in human embryonic stem cells, methylation occurs at cytosines outside of the CpG context.
+Therefore, it might be worthwhile to scan for all cytosines within the reference genome.
+Please note, for sequence patterns that are not reverse complementary, the function returns all start positions of the pattern within the plus and the minus strand.
+But for now, we will continue using the CpG pattern.
+
+
+
+
+\subsection{Sequence Pattern Coverage Analysis}
+The main idea of the coverage analysis is to test the number of CpGs (or any other predefined sequence pattern, see section 3.4) covered by the given short reads and to have a look at the depth of coverage.
+Before the coverage analysis can be executed, it is necessary to previously execute the \texttt{MEDIPS.getPositions} function (see section 3.4).
+Afterwards, the coverage analysis can be started by typing
+
+<<echo=TRUE, results=hide, eval=T>>=
+cr.control=MEDIPS.coverageAnalysis(data=CONTROL.SET, extend=400, no_iterations=10)
+@
+
+For the coverage analysis, the total set of available regions is divided into distinct random subsets of equal size, where the number of subsets is determined by the parameter \texttt{no\_iterations} (default=10). 
+The coverage analysis iteratively selects an increasing number of subsets and and tests how many CpGs are covered by the available regions.
+Moreover, it is tested how many CpGs are covered at least 1x, 2x, 3x, 4x, 5x, and 10x. 
+These levels of coverage depths can be adjusted by setting the \texttt{coverages} parameter (see below).
+As the regions are typically of short length (e.g. 36bp), it is recommended to extend the region length by an \texttt{extend} value (see section 3.2).
+
+The coverage analysis does not modify the MEDIPS SET object but the results are stored at the specified coverage results object (here \texttt{cr.control}).
+The results of the coverage analysis can be viewed by typing
+<<echo=TRUE, eval=T>>=
+cr.control
+@
+
+For example, the \texttt{maxPos} slot shows the total number of CpGs within chromosome 22 of the reference genome.
+Moreover, the \texttt{matrix} slot shows the results of the coverage analysis for each iteration and for each of the tested coverage depths.
+Here, the first row shows the tested levels of coverage. 
+The first column contains the number of considered short reads in each iteration.
+The following columns show the number of sequence patterns covered (at least) by the according coverage depths.
+
+The results of the coverage analysis can be visualized by typing
+
+<<echo=TRUE, fig=TRUE, eval=T>>=
+MEDIPS.plotCoverage(cr.control)
+@
+
+Further parameters that can be specified for the coverage analysis are:
+\begin{itemize}
+\item 
+\texttt{no\_random\_iterations}: methods that randomly select data entries may be processed several times in order to obtain more stable results. 
+By specifying the \texttt{no\_random\_iterations} parameter (default=1) it is possible to run the coverage analysis several times. 
+The final results returned to the coverage results object are the averaged results of each random iteration step.  
+\item 
+\texttt{coverages}: default is c(1, 2, 3, 4, 5, 10). The coverages define the depth levels for testing how often a sequence pattern was covered by the given regions.
+Just specify any other vector of coverage depths you would like to test.
+\end{itemize} 
+
+Although an increase of short reads will always improve the sequence pattern coverage, the coverage analysis together with the saturation analysis 
+allow for gaining an impression on the overall sequence pattern coverage and reproducibility of reconstructing a methylome based on the available short reads.
+These data quality controls assist in deciding whether the costs of additional experimental runs are in due proportion to the expected improvement on coverage and reproducibility.
+
+
+
+\subsection{CpG Enrichment}
+As a quality check for the enrichment of CpG rich DNA fragments obtained by the immunoprecipitation step of a MeDIP experiment, MEDIPS provides the functionality to calculate CpG enrichment values. 
+The main idea is to check, how strong the regions are enriched for CpGs compared to the reference genome.
+For this, MEDIPS counts the number of Cs, the number of Gs, the number CpGs, and the total number of bases within the specified reference genome. 
+Subsequently, MEDIPS calculates the relative frequency of CpGs and the observed/expected ratio of CpGs present in the reference genome.
+Additionally, MEDIPS calculates the same for the DNA sequences underlying the given regions.
+The final enrichment values result by dividing the relative frequency of CpGs (or the observed/expected value, respectively) of the regions by 
+the relative frequency of CpGs (or the observed/expected value, respectively) of the reference genome.
+(See also Supplementary Material in \citep{Chavez2010}.)
+
+You can start the CpG enrichment analysis by typing
+
+<<echo=TRUE, eval=T, results=hide>>=
+er.control=MEDIPS.CpGenrich(data=CONTROL.SET)
+@
+
+The CpG enrichment analysis does not modify the MEDIPS SET object but the results are stored at the specified enrichment results object (here \texttt{er.control}).
+You can access the results by typing
+
+<<echo=TRUE, eval=T>>=
+er.control
+@
+
+The enrichment results object contains several slots that show the number of Cs, Gs, and CpGs within the reference genome and within the given regions.
+Additionally, there are slots that show the relative frequency as well as the observed/expected CpG ratio within the reference genome and within the given regions.
+Finally, the slots \texttt{enrichment.score.relH} and \texttt{enrichment.score.GoGe} indicate the enrichment of CpGs within the given regions compared to the reference genome.
+For short reads derived from Input experiments (that is sequencing of none-enriched DNA fragments), the enrichment values should be close to 1 (see an example in section 3.11).
+In contrast, a MeDIP-seq experiment should return CpG rich sequences what will be indicated by increased enrichment scores.
+In our example, the enrichment score for the relative CpG enrichment is 2.547679, indicating an enrichment of CpG rich regions.
+
+In case you would like to examine not only the regions defined by the short reads, but also the DNA sequences of the putative longer DNA fragments from where the short reads were derived, 
+it is possible to increase the length of the regions by specifying the \texttt{extend} (default NULL) parameter. 
+By setting the \texttt{extend} to any positive value, the regions will be extended to the plus or to the minus dircetion (dependent on the strand information of the reads) and afterwards the CpG enrichment will be calculated for the extended regions. 
+
+
+
+
+
+\subsection{Creating the Coupling Vector}
+The need for MeDIP-seq data correction occurs by a varying efficiency of antibody binding with respect to local CpG densities.
+Similar to other MeDIP normalization methods \citep{Down2008}, \citep{Pelizzola2008}, 
+MEDIPS tries to correct for this effect by incorporating local CpG densities into the MeDIP-seq signals.
+In order to correct for local CpG densities, first a coupling vector has to be calculated.
+The coupling vector is of the same size as the predefined genome vector (see also section 3.2) but contains local CpG densities (also called coupling factors) instead of the raw signals for each genomic bin.
+Before the coupling vector can be created, it is necessary to previously excecute the \texttt{MEDIPS.getPositions} function (see section 3.4).
+
+The coupling vector is created and attached to the MEDIPS SET object by typing e.g.
+
+<<echo=TRUE, eval=T, results=hide>>=
+CONTROL.SET=MEDIPS.couplingVector(data=CONTROL.SET, fragmentLength=700, func="count")
+@
+
+For each pre-defined genomic bin, the density of surrounding CpGs (or of another pre-defined sequence pattern, respectively, see section 3.4) is calculated.
+For this, first a maximal distance has to be defined by specifying the parameter \texttt{fragmentLength}.
+Only CpGs within the range of \texttt{[(bin\_position-fragmentLength), bin\_position+fragmentLength]} will contribute to the final local coupling factor.
+The optimized value for the \texttt{fragmentLength} parameter will reflect the estimated size of the sonicated DNA fragments.
+There are several ways for calculating a coupling factor for a genomic bin. 
+The simplest way is to count the number of CpGs within the maximal defined distance around a genomic bin.
+Another approach is to weight each CpG by its distance to the current genomic bin.
+CpGs further away from the current genomic bin will receive smaller weights, whereas CpGs close to the genomic bin will receive higher weights.
+Again, there are several possible ways for such a weighting function.
+MEDIPS supports the following weighting functions (specified by the parameter \texttt{func}):
+
+\begin{itemize}
+\item 
+\texttt{count}: simply count the number of CpGs within the predefined maximal distance to the current bin
+\item 
+\texttt{linear}: the weights for CpGs decrease in a linear way and end at 0 at the predefined maximal distance to the current bin
+\item 
+\texttt{exp}: the weights for CpGs decrease in an exponential way \citep{Pelizzola2008}
+\item 
+\texttt{log}: the weights for CpGs decrease in a logarithmic way \citep{Pelizzola2008}
+\begin{sloppypar}
+\item 
+\texttt{custom}:
+ by setting the parameter to custom, it is required to specify a custom distance weights file using the parameter \texttt{distFile}.
+For example, \citep{Down2008} have generated distance weights in an empirical way. 
+Based on their results, we have created the file \texttt{flat\_400\_700.tab} that can be downloaded from \texttt{http://medips.molgen.mpg.de}.
+You can create such a distance file by your own and specify it here. 
+Here, the \texttt{fragmentLength} parameter will be neglected and the maximal distance within your provided distance file will be the limit.
+\end{sloppypar}
+\end{itemize}
+
+We have systematically calculated coupling factors with varying \texttt{fragmentLength} and \texttt{func} parameters and 
+compared the resulting coupling vectors to DNA-methylation values derived from bisulphite experiments performed by the human epigenome project (HEP) \citep{Eckhardt2006}.
+The best negative correlation (that is the higher the CpG density, the lower the bisulfite derived methylation values) was achieved by setting the parameters to \texttt{fragmentLength}=700 and \texttt{func}=count (see Supplementary Material in \citep{Chavez2010}).
+ 
+The coupling vector can be exported into a wiggle file by typing
+
+<<echo=TRUE, eval=F>>=
+MEDIPS.exportWIG(file="PatternDensity.WIG", data=CONTROL.SET, pattern.density=TRUE, descr="Pattern.density")
+@
+
+The exported Wiggle file can be uploaded into common genome browsers and allows for visualizing the density of the specified sequence pattern (e.g. CpGs) along the chromosomes. 
+We recommend to gzip the file before uploading it to the genome browser.
+
+
+
+
+
+\subsection{Calibration Curve and Linear Regression}
+As we have created a genome vector containing the raw signals at each genomic bin 
+as well as an according coupling vector containing coupling factors at each genomic bin (both stored within the MEDIPS SET object),
+we can now examine the dependency of local MeDIP-seq signal intensities and local CpG densities.
+This dependency can be made tangible by calculating the calibration curve:
+
+<<echo=TRUE, eval=T, results=hide>>=
+CONTROL.SET=MEDIPS.calibrationCurve(data=CONTROL.SET)
+@
+
+Calculation of the calibration curve is achieved by first dividing the total range of coupling factors into regular levels.
+Second, all genomic bins are partitioned into these levels by considering their associated coupling factors.   
+Finally, for each level of coupling factors, MEDIPS calculates the mean raw signal and mean coupling factor of all genomic bins that fall into this level.
+(For a detailed description see Supplementary Material in \citep{Chavez2010}.)
+
+The calibration curve represents averaged signals and coupling factors over the full range of coupling factors. 
+It indicates the experiment specific dependency between local signal intensities and CpG densities.
+The results of the calibration curve calculation can be visualized by typing e.g.
+
+<<echo=F, eval=T, results=hide>>=
+png("CalibrationPlotCONTROL.png")
+MEDIPS.plotCalibrationPlot(data=CONTROL.SET, linearFit=T, plot_chr="chr22")
+dev.off()
+@
+
+<<echo=TRUE, eval=F, results=hide>>=
+MEDIPS.plotCalibrationPlot(data=CONTROL.SET, linearFit=T, plot_chr="chr22")
+@
+
+\begin{figure}[h]
+\centering
+\includegraphics{CalibrationPlotCONTROL.png}
+\end{figure}
+
+Because the amount of data to be plotted can become very huge when plotting full genome data,
+it is strongly recommended to direct the output to a compressed file. 
+This can be achieved by calling a e.g. \texttt{png("plot.png")} function before calling the plot command.
+The plot will be available in the specified file (do not forget the \texttt{dev.off()} command after the plotting command). 
+Otherwise, R might not be able to visualize the plot in reasonable time.
+Each data value within the calibration plot represents a genomic bin.
+The X-axis shows the raw signals and the Y-axis shows the coupling factors for the genomic bins.
+The red curve represents the calibration curve.
+
+The calibration curve reveals that, in average, an increase of MeDIP-seq signals is caused by an increasing CpG density. 
+This approximately linear dependency is visible for the low range of coupling factors, only.
+For higher levels of CpG densities, the mean MeDIP-seq signals decrease. 
+It is assumed that this decrease is caused by the fact that in mammalian cells, regions of higher CpG densities are mainly unmethylated.
+In agreement with this assumption, Pelizzola and colleagues \citep{Pelizzola2008} have shown that 
+the dependency of MeDIP derived signals and CpG density continues for higher levels of CpG densities, by analyzing artificially fully methylated samples using MeDIP-Chip. 
+In detail, they have identified a sigmoidal dependency between CpG density and MeDIP-Chip data. 
+In agreement with Pelizzola et al. \citep{Pelizzola2008}, it is assumed that their signal plateau in the lower range of chip signals is caused by background noise. 
+However, it is assumed that their signal plateau in the upper range of chip signals occurs by a saturation of hybridization events and is therefore an array specific artefact.
+Motivated by the observations made by Pelizzola et al. \citep{Pelizzola2008} and by visual inspection of the MeDIP-seq derived calibration curve, 
+a continuing linear dependency of MeDIP-seq signals for higher levels of CpG densities is assumed.
+Analogous to Down et al. \citep{Down2008}, the local maximum of mean MeDIP-seq signals of the calibration curve in the lower part of coupling factors is identified. 
+Let 
+\begin{center}
+\texttt{y = y1,...,yl}
+\end{center}
+be the mean coupling factors, and let 
+\begin{center}
+\texttt{x = x1,...,xl}
+\end{center}
+be the according mean MeDIP-seq signals of the calibration curve, where \texttt{l} is the number of tested coupling factor levels and \texttt{i = 1,...,l}, 
+then the smallest level \texttt{i} is identified, where 
+\begin{center}
+\texttt{$x_{i-3}\leq x_{i-2}\leq x_{i-1}\leq x_{i}\geq x_{i+1}\geq x_{i+2}\geq x_{i+3}$}
+\end{center}
+
+Let $i_{max}$ be the according identified level of $i$, then
+\begin{center}
+$y_{max} = y_{1},...,y_{i_{max}}$
+\end{center}
+\begin{center}
+$x_{max} = x_{1},...,x_{i_{max}}$
+\end{center}
+are the parts of the calibration curve in the low range of coupling factors, 
+where an approximately linear dependency between MeDIP-seq signals and coupling factors is observed.
+Here, $x_{max}$ can be explained by a function of $y_{max}$ as
+\begin{center}
+$x_{max} = f(y_{max}) + \epsilon$
+\end{center}
+where $\epsilon$ is an error variable (i.e. measurement errors) that is expected to spread by chance and therefore, 
+its expectation value is $E( \epsilon ) = 0$. 
+Because a linear dependency between $x_{max}$ and $y_{max}$ is assumed, $x_{max}$ can be described as
+\begin{center}
+$x_{max} =  \alpha +  \beta \cdot y_{max} + \epsilon$
+\end{center}
+where the parameter $\alpha$ is the theoretical y-intercept, and the parameter $\beta$ is the theoretical slope. 
+Based on the pre-calculated $x_{max}$ and $y_{max}$ vectors, linear regression is performed, in order to identify a suitable linear model. 
+Linear regression estimates regression coefficients $a$ and $b$ for the parameters $\alpha$ and $\beta$ so that it is valid:
+\begin{center}
+$x_{max_{i}} = a + b \cdot y_{max_{i}} + e_{i}$
+\end{center}
+where $i = 1,...,i_{max}.$ Here, the residuum $e_{i}$ reflects the difference between the regression curve 
+$a + b \cdot  y_{max_{i}}$ and the measurements of $x_{max_{i}}$. Moreover, $x_{max_{i}}$ can be replaced by
+an estimate $\hat x_{max_{i}}$ , where 
+\begin{center}
+$x_{max_{i}}- \hat x_{max_{i}} = e_{i}$
+\end{center}
+and therefore, it is valid:
+\begin{center}
+$\hat x_{max_{i}} = a + b \cdot y_{max_{i}}$
+\end{center}
+
+After having calculated the calibration curve, 
+the \texttt{MEDIPS.calibrationCurve()} function performs the described linear regression and stores concrete values for the parameters $a$ (intercept) and $b$ (slope) 
+within the according slots of the MEDIPS SET. 
+By accessing the received parameters $a$ and $b$, concrete values for the parameter $\hat x_{max_{i}}$ can be calculated by the latter formula.
+For the low range of coupling factors, these estimates model the observed progression of the calibration curve. 
+As discussed above, a continuing linear dependency between MeDIP-seq signals and CpG density is expected for the higher range of coupling factors. 
+Based on the obtained linear model parameters, concrete $\hat x_{max_{i}}$ values can be calculated for the full range of coupling factors. Therefore,
+\begin{center}
+$\hat x =\hat x_{1},...,\hat x_{max_{i}}, ...,\hat x_{l}$
+\end{center}
+are the estimated mean MeDIP-seq signals over the full range of coupling factor levels $l$, 
+calculated with respect to the obtained linear model parameters.
+
+
+When the parameter \texttt{linearFit} of the \texttt{MEDIPS.plotCalibrationPlot()} function was set to TRUE, 
+the calibration plot contains a linear curve (green curve) that visualizes the results of the performed linear regression.
+This curve represents the calculated linear dependency between signals and CpG densities as estimated from the low range of coupling factors.
+
+Further parameters that can be specified when plotting the calibration curve are:
+
+\begin{itemize}
+\item 
+\texttt{plot\_chr}: default=\texttt{"all"}. Please don't forget to call a e.g. \texttt{png("file.png")} function before calling the plot command using \texttt{all} (see above).
+Alternatively, you can specify a selected chromosome (e.g. \texttt{chr1}). Here, the \texttt{plot\_chr} parameter only affects the plot and does not affect the MEDIPS SET object.
+\item 
+\texttt{xrange}: The mean signal range of the calibration curve typically falls into a low signal range. 
+By setting the \texttt{xrange} parameter to e.g. 50 (suitable for raw data), the calibration plot will only plot genomic bins associated with signals <=50. 
+Therefore, the effect of an increased CpG density to an increased signal can be better visualized, especially if the data contains genomic bins with high signals.
+\item 
+\texttt{rpm}: can be either TRUE or FALSE. If set to TRUE, the signals will be transformed into reads per million (rpm) before plotted.
+Additionally, the mean signal values of the calibration curve and of the estimated linear curve will be transformed to rpm scale. 
+The coupling values remain untouched.
+\end{itemize}
+ 
+The calibration plot is very characteristic for MeDIP-seq experiments.
+The quality of the enrichment step of the MeDIP experiment can be estimated by visual inspection of the progression of the calibration curve.
+Calibration curves for data derived from Input experiments look different (please see an example in section 3.11).
+
+
+
+
+
+
+
+\subsection{Relative Methylation Score and Export of Normalized Data}
+As soon as the normalization parameters are calculated (see previous section), the raw signals will be normalized and the normalized data will be stored within the MEDIPS SET object.
+
+<<echo=TRUE, eval=T, results=hide>>=
+CONTROL.SET=MEDIPS.normalize(data=CONTROL.SET)
+@
+
+For MeDIP-seq data normalization, $\hat x$ (see section 3.8) is utilized in order to weight the observed MeDIP-seq signals of the genomic bins 
+with respect to their associated coupling factors.
+Let $(x_{bin_{i}}, y_{bin_{i}})$ be the raw MeDIP-seq signal of the genomic bin $i$ 
+(i.e. the number of overlapping extended short reads), 
+and the pre-calculated coupling factor at the genomic bin $i$, 
+where $i = 1,...,m$ and $m$ is the total number of genomic bins, 
+then the normalized relative methylation score is defined as
+\begin{center}
+$rms_{bin_{i}}=\frac{x_{bin_{i}} \cdot 10^6}{(a + b \cdot y_{bin_{i}}) \cdot n}=\frac{x_{bin_{i}} \cdot 10^6}{\hat x_{bin_{i}} \cdot n}$
+\end{center}
+where $\hat x_{bin_{i}} = a + b \cdot y_{bin_{i}}$ is the estimated weighting parameter obtained by considering
+the coupling factor $y_{bin_{i}}$ of the genomic bin $i$, and $a$ and $b$ are the pre-calculated regression parameters. 
+Based on the total number of short reads ($n$), the raw MeDIP-seq signals are, in parallel, transformed into a reads per million
+format in order to assure that $rms$ values are comparable between methylomes
+generated from differing amounts of short reads.
+
+The $rms$ values can be exported into a wiggle file by typing
+
+<<echo=TRUE, eval=F, results=hide>>=
+MEDIPS.exportWIG(file="output.rms.control.WIG", data=CONTROL.SET, raw=F, descr="hESCs.rms")
+@
+
+All slots of the MEDIPS SET are now occupied.
+You can again have a look at the MEDIPS SET by typing
+
+<<echo=TRUE, eval=T>>=
+CONTROL.SET
+@
+
+
+
+
+
+
+
+
+\subsection{Methylation Profiles and Absolute Methylation Score}
+A typical question of MeDIP based DNA-methylation experiments is to examine the methylation state of specific genomic regions, 
+like e.g. CpG islands, promoters and other regions of interest (ROI).
+
+MEDIPS provides the functionalities to calculate averaged methylation values for either pre-defined ROIs or for genome wide windows.
+In order to receive the methylation state of targeted genomic regions, first a ROI file has to be created.
+The required structure of any file containing regions of interest is: 
+
+\begin{itemize}
+\item 
+the first column contains the chromosome of the ROI (e.g. chr1)
+\item 
+the second column contains the start position of the ROI
+\item
+the third column contains the stop position of the ROI
+\item
+the fourth column contains an identifier of the ROI  
+\end{itemize}
+
+\begin{sloppypar}
+As an example, you can access the file \texttt{hg19.chr22.txt} in the \texttt{extdata} subdirectory of the MEDIPS package. 
+\end{sloppypar}
+The file contains hg19 promoter regions of Ensembl transcripts located on the chromosome 22 as received from \texttt{www.biomart.org}.
+Here, the genomic coordinates start at -1kb of the transcript start sites (TSSs) and stop at +0.5kb downstream of the TSSs.
+Mean methylation values for these regions can be summarized based on the generated MEDIPS SET object by typing:
+
+<<echo=T, eval=T, results=hide>>=
+file=system.file("extdata", "hg19.chr22.txt", package="MEDIPS")
+promoter = MEDIPS.methylProfiling(data1 = CONTROL.SET, ROI_file = file, math = mean, select = 2)
+@
+
+Further parameters that can be specified are:
+
+\begin{itemize}
+\item 
+\texttt{chr}: only the specified chromosome will be evaluated (e.g. \texttt{chr1}).
+\item 
+\texttt{select}: can be either 1 or 2. If set to 1, variances will be calculated based on the rpm values; if set to 2, variances will be calculated based on the rms values.
+\item 
+\texttt{transf}: default=\texttt{TRUE}; If set to TRUE, MEDIPS transforms the mean rms and ams values into log2 scale and subsequently transforms their resulting data range into the consistent interval $[0,1000]$ before finally stored.
+\item 
+\texttt{math}: default=\texttt{mean}; Here, you can specify other functions available in R for summarizing values like \texttt{median} or \texttt{sum}.
+\item 
+\texttt{data2}: default=\texttt{NULL}; Here, a second MEDIPS SET can be provided, in case two MEDIPS SETs have to be compared (see also section 3.12).
+\item 
+\texttt{input}: default=\texttt{NULL}; Here, an INPUT SET can be provided. An INPUT SET is a MEDIPS SET but generated from data derived from an Input sample.
+An Input sample is generated by sonication of the DNA but without a subsequent methylated cytosine specific immunoprecipitation step. 
+Therefore, Input data reflects the genomic background. 
+MEDIPS allows for accessing Input data (if available) in order to calculate a genomic background signal distribution. 
+Such genomic background signals can be utilized for identifying hyper-methylated regions when two MEDIPS SETs are compared (see also section 3.12).
+\item 
+\texttt{frame\_size}: default=\texttt{NULL}; In spite of calculating averaged methylation values for given regions of interest,
+MEDIPS allows for calculating methylation levels for genome wide windows. The \texttt{frame\_size} parameter defines the size of the genomic windows to be tested.
+It is obvious that either the \texttt{frame\_size} or the \texttt{ROI\_file} parameter has to be specified.
+\item 
+\texttt{step}: default=\texttt{NULL}; In case the \texttt{frame\_size} parameter is specified, the $step$ parameter can be set to any arbitrary positive value.
+The \texttt{step} parameter defines the number of bases by which the genomic windows are shifted along the chromosomes.
+If \texttt{step} remains $NULL$, non overlapping adjacent genomic windows will be examined.
+By setting the \texttt{step} parameter to e.g. 250 bp and by setting the \texttt{frame\_size} parameter to e.g. 500 bp, 
+overlapping genomic windows will be examined, where the overlap of neighbouring genomic windows is 250 bp (see also the example below).
+\end{itemize}
+
+The results are stored as a list at the specified object (here \texttt{promoter}). 
+All list objects are vectors of the same length, where the length is defined by the number of tested ROIs.
+Please note, as we have generated and specified only one MEDIPS SET object so far, the results object only contains results (e.g. mean rpm and rms values) from one MEDIPS SET (provided at \texttt{data1}).
+The remaining vectors are empty and will be occupied when two MEDIPS SET objects will be compared (see section 3.12).
+Each row refers to a ROI, the row names contain the IDs of the provided ROIs, and the vectors of the list are:
+
+\begin{enumerate}
+\item 
+\texttt{chr}: the chromosome of the ROI
+\item 
+\texttt{start}: the start position of the ROI
+\item 
+\texttt{stop}: the stop position of the ROI
+\item 
+\texttt{length}: the number of genomic bins included in the ROI
+\item 
+\texttt{coupling}: the mean coupling factor of the ROI
+\item 
+\texttt{input}: the mean rpm value of the INPUT SET at \texttt{input} (if provided)
+\item 
+\texttt{rpm\_A}: the mean rpm value for the MEDIPS SET at \texttt{data1}
+\item 
+\texttt{rpm\_B}: the mean rpm value for the MEDIPS SET at \texttt{data2} (if a second MEDIPS SET is provided)
+\item 
+\texttt{rms\_A}: the (transformed, see below) mean rms value for the MEDIPS SET at \texttt{data1}
+\item 
+\texttt{rms\_B}: the (transformed, see below) mean rms value for the MEDIPS SET at \texttt{data2} (if a second MEDIPS SET is provided)
+\item 
+\texttt{ams\_A}: the (transformed, see below) mean absolute methylation score (see below) for the MEDIPS SET at \texttt{data1}
+\item 
+\texttt{ams\_B}: the (transformed, see below) mean absolute methylation score (see below) for the MEDIPS SET at \texttt{data2} (if a second MEDIPS SET is provided)
+\item 
+\texttt{var\_A}: the variance of the rpm (or rms, respectively, please see the parameter \texttt{select}) values of the MEDIPS SET at \texttt{data1}
+\item 
+\texttt{var\_B}: the variance of the rpm (or rms, respectively, please see the parameter \texttt{select}) of the MEDIPS SET at \texttt{data2} (if a second MEDIPS SET is provided)
+\item 
+\texttt{var\_co\_A}: the coefficient of variation of the rpm (or rms, respectively, please see the parameter \texttt{select}) of the MEDIPS SET at \texttt{data1}
+\item 
+\texttt{var\_co\_B}: the coefficient of variation of the rpm (or rms, respectively, please see the parameter \texttt{select}) of the MEDIPS SET at \texttt{data2} (if a second MEDIPS SET is provided)
+\item 
+\texttt{ratio}: rpm\_A/rpm\_B (or rms\_A/rms\_B, respectively, please see the parameter \texttt{select}) (if a second MEDIPS SET is provided)
+\item 
+\texttt{pvalue.wilcox}: the p.value returned by R's \texttt{wilcox.test} function for comparing the rpm values (or rms values, respectively, please see the parameter \texttt{select}) 
+of the MEDIPS SET on \texttt{data1} and of the MEDIPS SET at \texttt{data2} (if a second MEDIPS SET is provided)
+\item 
+\texttt{pvalue.ttest}: the p.value returned by R's \texttt{t.test} function for comparing the rpm values (or rms values, respectively, please see the parameter \texttt{select}) 
+of the MEDIPS SET on \texttt{data1} and of the MEDIPS SET at \texttt{data2} (if a second MEDIPS SET is provided)
+\end{enumerate}
+
+Mean \texttt{rms} values (\texttt{rms\_A} and \texttt{rms\_B}) are calculated based on the pre-calculated $rms_{bin_{i}}$ values of the genomic bins enclosed by the ROI.
+In case, the parameter $transf$ was set to TRUE, MEDIPS transforms the mean rms values into log2 scale and subsequently transforms the resulting data range into the consistent interval $[0,1000]$ before finally stored.
+Therefore, the minimal transformed mean \texttt{rms\_A} (or mean \texttt{rms\_B}, respectively) value will always be 0 
+and the maximal transformed mean \texttt{rms\_A} (or mean \texttt{rms\_B}, respectively) will always be 1000. 
+This transformation assures that the resulting mean rms values of the tested ROIs will spread over a consistent interval.
+Therefore, highly methylated ROIs may be subsequently identified by selecting ROIs associated to e.g. \texttt{rms\_A>600}. 
+The other way round, lowly methylated ROIs may be subsequently identified by selecting ROIs associated to e.g. \texttt{rms\_A<400}. 
+However, it has to be kept in mind that the resulting data range ($[0,1000]$) reflects the relative methylation levels of the tested ROIs.
+
+We consider the $rms$ values as experiment specific normalized MeDIP-seq signals corrected for the varying efficiency of antibody binding and immunoprecipitation in genomic regions with different CpG densities. 
+In order to identify an absolute methylation estimate for any specified region of interest, 
+i.e. either for any functional genomic regions like promoters or CpG islands or for genome wide windows of arbitrary length,
+the raw MeDIP-seq values can be normalized into absolute methylation scores ($ams$).
+The absolute methylation scores additionally correct for the general CpG density of the region of interest and therefore, 
+allow for comparing methylation profiles of genomic regions with different CpG densities.
+This is especially needful, when local methylation levels are associated to further functional and regulatory mechanism like e.g. gene expression alterations. 
+As an example, it is supposed that methylation levels of proximal promoters influence the transcription rate of the according genes. 
+However, promoters are known to show a wide spread spectrum of CpG densities. 
+Therefore, a fully methylated high CpG density promoter will show much higher MeDIP signals than a fully methylated low CpG density promoter,
+although in both cases the promoter methylation level may influence the transcription rate in a comparable way. 
+Therefore, it remains inaccurate to conclude an absolute measure of promoter methylation by comparing MeDIP-seq derived $rpm$ or $rms$ signals from promoters with different CpG densities.
+
+Let
+\begin{center}
+$ROI = ((x_{bin_{1}},y_{bin_{1}}),...,(x_{bin_{s}},y_{bin_{s}}))$
+\end{center}
+be the raw MeDIP-seq signals and coupling factors of adjacent genomic bins $i$ that define a region of interest (ROI), 
+where $i = 1,...,s$ and $s$ is the total number of genomic bins comprised by the ROI, 
+then the absolute methylation score for the ROI is defined as:
+\begin{center}
+$ams_{ROI}=\frac{\frac{1}{s} \sum\limits_{i=1}^s \frac{x_{bin_{i}} \cdot 10^6}{(a + b \cdot y_{bin_{i}}) \cdot n}}{\frac{1}{s} \sum\limits_{i=1}^s y_{bin_{i}}}$
+\end{center}
+
+
+After having exectuted the $MEDIPS.methylProfiling()$ function for the specified ROI file containing promoter regions, 
+one can have a look at e.g. the histogram of CpG densities or methylation levels.
+Simply call Rs \texttt{hist()} function and specify the desired column of the matrix. 
+For the mean coupling factors type e.g.
+
+<<echo=TRUE, eval=T, results=hide, fig=TRUE>>=
+hist(promoter$coupling, breaks=100, main="Promoter CpG densities", xlab="CpG coupling factors")
+@
+
+The histogram shows a bimodal distribution of promoter CpG densities. 
+For a histogram of mean $rpm$ values type
+
+<<echo=TRUE, eval=T, results=hide, fig=TRUE>>=
+hist(promoter$rpm_A[promoter$rpm_A!=0], breaks=100, main="RPM signals", xlab="reads/bin")
+@
+
+Because there are promoter regions without any signals, we do not consider them for the histogram.
+The plot shows that a bimodal methylation distribution of the promoters is not visible for the $rpm$ signals.
+The $rms$ or $ams$ values indicate a bimodal distribution of promoter methylation:
+
+<<echo=TRUE, eval=T, results=hide, fig=TRUE>>=
+hist(promoter$ams_A[promoter$ams_A!=0], breaks=100, main="AMS signals", xlab="absolute methylation score (ams)")
+@
+
+We have shown \citep{Chavez2010} that such summarized methylation values for ROIs, 
+especially the $ams$ values, are most suitable for comparing MeDIP data to e.g. bisulphite sequencing or whole genome shotgun bisulphite sequencing data.
+
+Besides summarizing methylation values for pre-defined ROIs, MEDIPS allows for calculating mean methylation values along the chromosomes.
+For this, you have to specify a desired frame size using the parameter \texttt{frame\_size}.
+Additionally, you can specify the \texttt{step} parameter.
+The \texttt{step} parameter defines the number of bases by which the frames are shifted along the chromosome. 
+If you e.g. set the \texttt{frame\_size} parameter to 500 and the \texttt{step} parameter to 250, then MEDIPS calculates mean methylation values for overlapping 500bp windows, 
+where the size of the overlap will be 250bp for all neighbouring windows. 
+Without specifying the \texttt{step} parameter, MEDIPS will calculate mean methylation values for all none-overlapping windows of size \texttt{frame\_size}.
+
+<<echo=TRUE, eval=F, results=hide>>=
+frames.frame500.step250=MEDIPS.methylProfiling(data1=CONTROL.SET, frame_size=500, step=250, math=mean, select=2)
+@
+
+Please note, the \texttt{MEDIPS.methylProfiling()} function takes a comparable long processing time when called for genome wide short windows.
+For example, the processing of the full human genome using overlapping 500bp windows takes approx. 10h on our hardware. 
+Therefore, you may want to store the received matrix afterwards by using R's \texttt{write.table()} function like:
+
+<<echo=TRUE, results=hide, eval=F>>=
+write.table(frames.frame500.step250, file="frames.chr22.meth.txt", sep="\t", quote=F, col.names=T, row.names=F)
+@
+
+Here, you do not need to store the \texttt{row.names} as genome wide frames will not have identifiers.
+For ROIs provided within a ROI file, you might want to set \texttt{row.names=T} in order to keep the identifiers.
+
+You can upload the results table at any later time into R by typing
+
+<<echo=TRUE, results=hide, eval=F>>=
+frames.frame500.step250=read.table(file="frames.chr22.meth.txt", header=T)
+@
+
+
+
+
+
+
+
+
+
+
+\subsection{Additional MEDIPS SET Objects}
+In order to identify differentially methylated regions (DMRs) between two different conditions, a second MEDIPS SET has to be created and processed.
+In our example, the file \texttt{MeDIP\_DE\_chr22.txt} contains MeDIP-seq data of chromosome 22 
+derived from human embryonic stem cells after differentiation along the endodermal lineage into definitive endoderm (DE) (\citep{Chavez2010}).
+We now process the data using the same parameter settings as for the previously created CONTROL.SET:
+
+<<echo=T, results=hide, eval=T>>=
+file=system.file("extdata", "MeDIP_DE_chr22.txt", package="MEDIPS")
+TREAT.SET=MEDIPS.readAlignedSequences(BSgenome="BSgenome.Hsapiens.UCSC.hg19", file=file, numrows=863054)
+@
+
+<<echo=TRUE, results=hide, eval=T>>=
+TREAT.SET=MEDIPS.genomeVector(data=TREAT.SET, bin_size=50, extend=400)
+@
+<<echo=TRUE, results=hide, eval=T>>=
+TREAT.SET=MEDIPS.getPositions(data=TREAT.SET, pattern="CG")
+@
+<<echo=TRUE, results=hide, eval=T>>=
+TREAT.SET=MEDIPS.couplingVector(data=TREAT.SET, fragmentLength=700, func="count")
+@
+<<echo=TRUE, results=hide, eval=T>>=
+TREAT.SET=MEDIPS.calibrationCurve(data=TREAT.SET)
+@
+<<echo=TRUE, results=hide, eval=T>>=
+TREAT.SET=MEDIPS.normalize(data=TREAT.SET)
+@
+
+So far, we have the second MEDIPS SET sufficiently processed for the subsequent comparison of two MEDIPS SETs.
+Here, we will not perform the quality controls or further diagnostic analyses for the TREAT.SET. 
+However, it is recommended to calculate these quality metrics for each data set.
+
+For identification of differentially methylated regions, it is recommended (but not necessary) to provide background data from an Input experiment (that is sequencing of non-enriched DNA fragments).
+By providing an Input data set, MEDIPS will calculate a background data distribution used for the identification of DMRs.
+Therefore, we now process the available Input data given in the example file \texttt{Input\_StemCells\_chr22.txt}:
+
+<<echo=T, results=hide, eval=T>>=
+file=system.file("extdata", "Input_StemCells_chr22.txt", package="MEDIPS")
+INPUT.SET=MEDIPS.readAlignedSequences(BSgenome="BSgenome.Hsapiens.UCSC.hg19", file=file, numrows=352756)
+@
+
+<<echo=TRUE, results=hide, eval=T>>=
+INPUT.SET=MEDIPS.genomeVector(data=INPUT.SET, bin_size=50, extend=400)
+@
+
+In case of Input data, we do not correct for CpG denstities because no enrichment for methylated CpG's was performed.
+Only the rpm values will be considered.
+Therefore, the INPUT SET is already sufficiently processed for beeing integrated into the DMR identification process.
+In the context of this manual, we do not perform the quality controls and further diagnostic analyses for the INPUT.SET.
+However, we strongly recommend to calculate the quality control metrics as described for the CONTROL.SET, 
+in order to work out the differences between MeDIP and Input data (e.g. saturation-, coverage-, CpG enrichment analyses, and creation of the calibration plot).
+These analyses can be performed for the INPUT.SET by typing e.g.:
+
+<<echo=TRUE, results=hide, eval=F>>=
+MEDIPS.exportWIG(file="output.rpm.input.WIG", data=INPUT.SET, raw=T, descr="INPUT.rpm")
+@
+
+<<echo=TRUE, results=hide, eval=F>>=
+sr.input=MEDIPS.saturationAnalysis(data=INPUT.SET, bin_size=50, extend=400, no_iterations=10, no_random_iterations=1)
+MEDIPS.plotSaturation(sr.input)
+@
+
+The saturation analysis will show that the reproducibility increases more slowly for Input data than for MeDIP data.
+This is due to an increased complexity of available genomic DNA that has to be sequenced when no specific enrichment was performed.
+
+<<echo=TRUE, results=hide, eval=F>>=
+INPUT.SET=MEDIPS.getPositions(data=INPUT.SET, pattern="CG")
+@
+
+<<echo=TRUE, results=hide, eval=F>>=
+cr.input=MEDIPS.coverageAnalysis(data=INPUT.SET, extend=400, no_iterations=10)
+MEDIPS.plotCoverage(cr.input)
+@
+
+<<echo=TRUE, results=hide, eval=F>>=
+er.input=MEDIPS.CpGenrich(data=INPUT.SET)
+@
+
+The CpG enrichment values indicate that Input data is not as strong enriched for CpGs as MeDIP data.
+
+<<echo=TRUE, results=hide, eval=F>>=
+INPUT.SET=MEDIPS.couplingVector(data=INPUT.SET, fragmentLength=700, func="count")
+@
+
+<<echo=TRUE, results=hide, eval=F>>=
+INPUT.SET=MEDIPS.calibrationCurve(data=INPUT.SET)
+@
+
+<<echo=TRUE, results=hide, eval=F>>=
+png("CalibrationPlotINPUT.png")
+MEDIPS.plotCalibrationPlot(data=INPUT.SET, linearFit=F, plot_chr="chr22")
+dev.off()
+@
+
+The calibration curve of the calibration plot allows for discriminating MeDIP from Input data.
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Methylation Profiles of Two MEDIPS SET Objects}
+
+As we have generated two MEDIPS SETs and one INPUT SET, we will now calculate mean methylation values for all three sets in parallel 
+and compare the methylation profiles of the two MEDIPS SETs with respect to the INPUT SET.
+Methylation profiles and comparisons can be performed for given regions of interest (see section 3.10) or for genome wide (sliding) frames.
+This is all done by the \texttt{MEDIPS.methylProfiling()} function. 
+
+Here, we process genome wide adjacent 500bp windows: 
+
+<<echo=TRUE, results=hide, eval=T>>=
+diff.meth=MEDIPS.methylProfiling(data1=CONTROL.SET, data2=TREAT.SET, input=INPUT.SET, frame_size=500, select=2)
+@
+
+Please note, the \texttt{MEDIPS.methylProfiling()} function takes a comparatively long processing time when called for genome wide short windows.
+In fact, this is the most time-consuming bottleneck of the whole procedure for identifying DMRs.
+
+The results are stored as a list at the specified object (here \texttt{diff.meth}). 
+All list objects are vectors of the same length, where the length is defined by the number of tested frames.
+Each row refers to a ROI and the individual vectors are as described in section 3.10.
+Here, all vectors are occupied, including mean methylation values for the two MEDIPS SETs and for the INPUT SET, 
+as well as ratios and p-values obtained from comparing the two MEDIPS SETs. 
+
+Let $C$, $T$, and $I$ be the genome vectors generated based on the sequencing
+data from the CONTROL.SET, TREAT.SET, and INPUT.SET objects using an arbitrary bin size $b$ 
+and let $ROI$ be a set of ROIs (e.g. genome wide windows), where $ROI = ROI_{1},...,ROI_{i},...ROI_{n}$, and
+$n$ is the number of ROIs to be tested. Let the ROIs be of length $m_{1},...,m_{n}$. 
+In the following, the identification of DMRs is only supported for any $ROI_{i}$ of length $m_{i} \geq 5 \cdot b$.
+Therefore, each $ROI_{i}$ includes at least five genomic bins $bin_{i,j}$, where $bin_{i,1},...,bin_{i,j},...,bin_{i,k_{i}} \epsilon ROI_{i}$ and $k_{i} = floor(\frac{m_{i}}{b})$. 
+For each $ROI_{i}$, mean $rpm$ and mean $rms$ values are calculated based on $C$ and $T$ as:
+
+\begin{center}
+$C.RPM_{ROI_{i}}=\frac{1}{k_{i}} \sum\limits_{j=1}^{k_{i}} rpm(C.b_{i,j})$
+\end{center}
+\begin{center}
+$C.RMS_{ROI_{i}}=\frac{1}{k_{i}} \sum\limits_{j=1}^{k_{i}} rms(C.b_{i,j})$
+\end{center}
+\begin{center}
+$T.RPM_{ROI_{i}}=\frac{1}{k_{i}} \sum\limits_{j=1}^{k_{i}} rpm(T.b_{i,j})$
+\end{center}
+\begin{center}
+$T.RMS_{ROI_{i}}=\frac{1}{k_{i}} \sum\limits_{j=1}^{k_{i}} rms(T.b_{i,j})$
+\end{center}
+
+where $rpm(C.b_{i,j})$, $rms(C.b_{i,j})$, $rpm(T.b_{i,j})$, and $rms(T.b_{i,j})$ are the pre-calculated
+$rpm$ and $rms$ (see sections 3.2 and 3.9) values of the genomic bins from the Control and Treatment samples. 
+In addition, for each $ROI_{i}$, mean $rpm$ values are calculated based on $I$ as:
+
+\begin{center}
+$I.RPM_{ROI_{i}}=\frac{1}{k_{i}} \sum\limits_{j=1}^{k_{i}} rpm(I.b_{i,j})$
+\end{center}
+
+where $rpm(I.b_{i,j})$ are the pre-calculated rpm values of the genomic bins from the Input sample.
+Based on the mean $rms$ values of the Control and of the Treatment sample, 
+for each $ROI_{i}$ the following ratios are calculated:
+
+\begin{center}
+$r.rms_{ROI_{i}}=\frac{C.RMS_{ROI_{i}}}{T.RMS_{ROI_{i}}}$
+\end{center}
+
+In addition, by considering the mean $rpm$ values of the Control or of the Treatment sample, respectively, 
+the following ratios are calculated with respect to mean $rpm$ values of the Input sample:
+
+\begin{center}
+$r.rpm.C_{ROI_{i}}=\frac{C.RPM_{ROI_{i}}}{I.RPM_{ROI_{i}}}$
+\end{center}
+
+\begin{center}
+$r.rpm.T_{ROI_{i}}=\frac{T.RPM_{ROI_{i}}}{I.RPM_{ROI_{i}}}$
+\end{center}
+
+Because local background sequencing signals are variable along the chromosomes due to differing DNA availability, 
+a global background $rpm$ signal threshold is estimated based on the distribution of all calculated $I.RPM_{ROI_{i}}$ values. 
+This is done by defining a targeted quantile $qt$ (e.g. $qt = 0.95$) and by identifying the $I.RPM_{ROI_{i}}$ value ($t$),
+where $qt\%$ of all $I.RPM_{ROI_{i}}$ values are $< t$. 
+This estimated global minimal mean $rpm$ threshold $t$ will serve as an additional parameter for selecting genomic regions that show
+a mean MeDIP-seq derived $rpm$ signal of at least $t$ in the Control or the Treatment sample, respectively (see next section).
+
+In addition, statistical testing is utilized in order to rate whether the obtained $rms$ data series 
+of the genomic bins within any $ROI_{i}$ significantly differ in the Control sample compared to the Treatment sample. 
+For each $ROI_{i}$ it is tested, whether the $rpm$ (or $rms$, respectively, see parameter \texttt{select}) values of the genomic bins  $bin_{i,1},...,bin_{i,j},...,bin_{i,k_{i}} \epsilon ROI_{i}$ of the Control
+sample significantly differ from the $rpm$ (or $rms$, respectively, see parameter \texttt{select}) values of the according genomic bins of the Treatment sample. 
+For this, the MEDIPS package utilizes the \texttt{t.test()} and \texttt{wilcox.test()} functions of the R environment with default parameter settings (two-sided tests in both cases). 
+Therefore, for each tested $ROI_{i}$, two p-values ($ROI.p.value.t_{i}$ and $ROI.p.value.w_{i}$) will be calculated 
+and serve as a further level for discriminating between local methylation profiles (see next section).
+
+Please note, in case the $trasnf$ parameter was set to TRUE, the returned mean $rms$ and $ams$ values within the $diff.meth$ object are in log2 scale and were transformed into the consistent interval [0:1000].
+However, ratios and p.values were calculated before the data was log2 scaled and shifted into the interval [0:1000].
+Ratios and p.values can be calculated based on the $rpm$ or $rms$ values by specifying the parameter \texttt{select} of the \texttt{MEDIPS.methylProfiling()} function.
+
+You may want to store the received result matrix by using R's \texttt{write.table()} function like:
+
+<<echo=TRUE, results=hide, eval=F>>=
+write.table(diff.meth, file="diff.meth.txt", sep="\t", quote=F, col.names=T, row.names=F)
+@
+
+You can upload the result matrix at any later time into R by typing
+
+<<echo=TRUE, results=hide, eval=F>>=
+diff.meth=read.table(file="diff.meth.txt", header=T)
+@
+
+
+
+ 
+
+
+
+
+
+\subsection{Selecting Candidate DMRs and Annotation}
+Based on the results returned from the \texttt{MEDIPS.methylProfiling()} function in section 3.12 (here \texttt{diff.meth}), 
+we now select candidate ROIs that show significant differential methylation between the CONTROL.SET and the TREAT.SET in consideration of the background data included in the INPUT.SET.
+For this, MEDIPS offers the possibility to specify the following parameters in order to apply several filters to the full set of ROIs:
+
+\begin{itemize}
+\item 
+\texttt{frames}: specifies the result table 
+\item 
+\texttt{input}: default=T; Setting the parameter to TRUE requires that the results table includes a column for summarized $rpm$ values of an INPUT SET.
+In case there is no Input data available, the \texttt{input} parameter has to be set to a $rpm$ value that will be used as a lower threshold during the subsequent analysis.
+How to estimate such a threshold without background data is not yet solved by MEDIPS.
+\item 
+\texttt{quant}: default=0.9; from the distribution of all Input $rpm$ values, 
+MEDIPS calculates the $rpm$ value that represents the \texttt{quant} quantile of the whole Input distribution.
+\item 
+\texttt{control}: can be either TRUE or FALSE.
+MEDIPS allows for selecting ROIs that are higher methylated in the CONTROL SET compared to the TREAT SET and vice versa but both approaches have to be perfomed in two independent runs.
+By setting control=TRUE, ROIs will be selected that are higher methylated in the CONTROL SET. 
+By setting control=FALSE, ROIs will be selected that are higher methylated in the TREAT SET.
+\item 
+\texttt{up}: default=1.333333; defines the lower threshold for the ratio CONTROL/TREATMENT as well as the lower ratio for CONTROL/INPUT (if \texttt{control}=T) or TREATMENT/INPUT (if \texttt{control}=F), respectively.
+\item 
+\texttt{down}: default=0.75; defines the upper threshold for the ratio: CONTROL/TREATMENT (only if \texttt{control}=F).
+\item 
+\texttt{p.value}: default=0.01; defines the threshold for the p-values. 
+One of the two p-values derived from the \texttt{wilcox.test} and \texttt{t.test} functions has to be <= \texttt{p.value}. 
+\end{itemize}
+
+The following command filters for candidate frames that are higher methylated in human embryonic stem cells than in differentiated hESCs:
+<<echo=TRUE, eval=T>>=
+diff.meth.control=MEDIPS.selectSignificants(frames=diff.meth, control=T, input=T, up=2, p.value=0.0001, quant=0.99)
+@
+
+For identifying $ROI_{i}$'s that show differential methylation between the Control and the Treatment sample with respect to the Input sample, 
+based on the pre-calculated parameters (see previous section), a filtering procedure is performed. 
+The following filtering procedure also discriminates between increased methylation in the Control sample compared to the Treatment sample 
+(Control>Treatment, a) and vice versa (Treatment>Control, b):
+
+\begin{enumerate}
+\item $ROI_{i}$'s where $C.RPM_{ROI_{i}} = T.RPM_{ROI_{i}} = 0$ are neglected,
+\item $ROI_{i}$'s where $ROI.p.value.t_{i} > p.value$ and $ROI.p.value.w_{i} > p$ are neglected, where $p.value$ is
+any targeted level of significance (e.g. $p.value = 0.01$),
+\item Filtering for the ratio:
+	\begin{itemize}
+	\item a) $ROI_{i}$'s where $r.rms_{ROI_{i}} < up$ are neglected, where $up$ is an upper ratio threshold (e.g. $up = 1.33$),
+	\item b) $ROI_{i}$'s where $r.rms_{ROI_{i}} > down$ are neglected, where $down$ is a lower ratio threshold (e.g. $down$ = 0.75),
+	\end{itemize}
+\item Filtering for global Input derived background signals:
+	\begin{itemize}
+	\item a) $ROI_{i}$'s where $C.RPM_{ROI_{i}} < t$ are neglected,
+	\item b) $ROI_{i}$'s where $T.RPM_{ROI_{i}} < t$ are neglected,
+	\end{itemize}
+\item Filtering for local Input derived background signals:
+	\begin{itemize}
+	\item a) $ROI_{i}$'s where $r.rpm.C_{ROI_{i}} < up$ are neglected,
+	\item b) $ROI_{i}$'s where $r.rpm.T_{ROI_{i}} < up$ are neglected.
+	\end{itemize}
+\end{enumerate}
+
+\begin{sloppypar}
+In our example, there are 294 frames of length 500bp that remain after the \texttt{MEDIPS.selectSignificants()} step.
+In case, the \texttt{MEDIPS.methylProfiling()} function was executed in order to test overlapping frames (i.e. specifying the $step$ parameter),
+overlapping significant frames may be returned to the \texttt{diff.meth.control} results table.
+For these cases it is worthwhile to merge overlapping regions by typing:
+\end{sloppypar}
+
+<<echo=TRUE, eval=F>>=
+diff.meth.control.merged=MEDIPS.mergeFrames(frames=diff.meth.control)
+@
+
+Please note, merged frames are represented only by their genomic coordinates within the \texttt{diff.meth.control.merged} table
+(these are the chromosome names, new start, and new stop positions). The result table does not contain any merged $rpm$, $rms$, $variance$, $p.value$, etc. values any more.
+
+Moreover, it is important to keep in mind, that there are three main reasons why an analysis of only a subset of the full genome (here only chromosome 22)
+will probably end up in a different number of significant DMRs: 
+First, the calibration parameters were calculated for only one chromosome.
+Second, the total number of given regions differs and therefore, the reads per million values will differ. 
+Third, the $rpm$ threshold derived from the background Input data distribution was calculated based on data from only one chromosome.
+
+You can write out the obtained regions by typing some suitable R code like:
+
+<<echo=TRUE, eval=F>>=
+write.table(diff.meth.control, file = "DiffMethyl.Up.hESCs.bed", sep = "\t", quote = F, row.names = F, col.names = F)
+@
+
+You can upload the resulting file into a genome browser and the DMRs will be visualized as black blocks.
+
+Finally, it might be of interest to annotate the DMRs.
+We fall back on the example ROI file \texttt{hg19.chr22.txt} that contains pre-defined promoter regions (-1kb to +0.5kb around the TSSs).
+We annotate the identified DMRs by the transcript promoters included in the ROI file by typing
+
+<<echo=T, eval=T, results=hide>>=
+file=system.file("extdata", "hg19.chr22.txt", package="MEDIPS")
+diff.meth.control.annotated=MEDIPS.annotate(diff.meth.control, anno=file)
+@
+
+The resulting table is of the following format: 
+
+\begin{enumerate}
+\item 
+\texttt{chr}: the chromosome name of the DMR
+\item 
+\texttt{start}: the start position of the DMR
+\item 
+\texttt{end}: the stop position of the DMR
+\item 
+\texttt{feature}: the name of the matched annotation
+\end{enumerate}
+
+For each provided region (DMR), the function returns all overlapping annotations included in the provided annotation file.
+Note, in case there are several overlapping annotations, the region (DMR) is returned several times in separated rows, each entry associated to one annotation.
+In order to receive e.g. a unique list of ensembl transcript names whose promoter regions overlap with a DMR, 
+you can now easily select for the appropriate entries using standard R commands, e.g.
+
+<<echo=TRUE, eval=T>>=
+length(unique(diff.meth.control.annotated[,4]))
+@
+
+In our example, the 294 identified DMRs on chromosome 22 can be associated to promoter regions of 25 unique transcripts (including genes as well as pseudogenes and small RNAs).
+These DMRs can be interpreted as regions where de-methylation events occur during the differentiation of hESCs along the endodermal lineage.   
+
+The other way round, we now select for frames higher methylated in differentiated hESCs (DE) than in pluripotent hESCs:
+
+<<echo=TRUE, eval=T>>=
+diff.meth.treat=MEDIPS.selectSignificants(frames=diff.meth, control=F, input=T, up=2, down=0.5, p.value=0.0001, quant=0.99)
+@
+<<echo=TRUE, eval=F>>=
+write.table(diff.meth.treat, file = "DiffMethyl.Up.DE.bed", sep = "\t", quote = F, row.names = F, col.names = F)
+@
+
+<<echo=T, eval=T, results=hide>>=
+file=system.file("extdata", "hg19.chr22.txt", package="MEDIPS")
+diff.meth.treat.annotated=MEDIPS.annotate(diff.meth.treat, anno=file)
+@
+
+<<echo=TRUE, eval=T>>=
+length(unique(diff.meth.treat.annotated[,4]))
+@
+
+In our example, there are 47 non-overlapping DMRs on chromosome 22 associated to promoter regions of 28 unique transcripts.
+These DMRs can be interpreted as regions where \texttt{de-novo} methylation events occur during the differentiation of hESCs along the endodermal lineage.
+
+
+\section{Concluding Remarks}
+In our opinion, MEDIPS provides several helpful functionalities for analysing MeDIP-seq data in reasonable time compared to other available approaches.
+Nevertheless, there are some limitations that have to be adressed in the future.
+Main issues are:
+
+\begin{itemize}
+\item 
+Because MEDIPS processes full genome data at once, MEDIPS needs a lot of memory.
+Especially, when two MEDIPS SETs as well as an INPUT SET is uploaded and utilized for the identification of DMRs, the need for memory is very huge.
+\item 
+The runtime, especially calculation of mean methylation values or identification of DMRs at genome wide short windows remains a bottleneck.
+\item 
+The \texttt{MEDIPS.methylProfiling()} function is a novel approach for the identification of DMRs, 
+and is especially suitable for MeDIP-seq data because DNA methylation is expected to occur on longer DNA stretches compared to smaller enrichments derived from e.g. ChIP-seq data.  
+However, identification of DMRs is very static. 
+The definition of fixed windows, although when overlapping windows are allowed, is not very flexible. 
+A dynamic method for the identification of optimized DMRs might be of interest. 
+\end{itemize}
+
+However, to the best of our knowledge, MEDIPS is currently the most comprehensive software for processing MeDIP-seq data.
+It starts where the mapping tools stop, touches several aspects of data quality checks, allows for exporting raw and normalized methylation profiles, 
+calculates mean methylation values for any specified ROI and identifies genome wide DMRs when hunting for differential DNA-methylation comparing two conditions. 
+
+
+
+
+
+
+\bibliographystyle{plainnat}
+\bibliography{MEDIPSTutorial}
+
+
+\end{document}

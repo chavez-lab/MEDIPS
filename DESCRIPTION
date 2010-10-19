@@ -1,7 +1,7 @@
 Package: MEDIPS
 Type: Package
 Title: MeDIP-Seq data analysis
-Version: 1.1.0
+Version: 1.1.1
 Date: 2010-09-28
 Author: Lukas Chavez, Joern Dietrich
 Maintainer: Lukas Chavez <chavez@molgen.mpg.de>
@@ -10,7 +10,7 @@ Description: MEDIPS was developed for analyzing data derived from methylated DNA
 	MEDIPS adresses several aspects in the context of MeDIP-Seq data analysis.
 License: GPL (>=2)
 LazyLoad: yes
-biocViews: Sequencing
+biocViews: Sequencing, DNAMethylation, CpGIsland, DifferentialExpression, HighThroughputSequencing, ChIPseq, Preprocessing, QualityControl, Visualization
 Depends: R (>= 2.12.0), BSgenome
 Imports: Biostrings, BSgenome, graphics, gtools, IRanges, methods,
          stats, utils

@@ -9,13 +9,13 @@ MEDIPS.CpGenrich <-function(data=data,extend=NULL){
       pos1=CpG[values(CpG)[,"strand"]=="+",] 
       pos2=CpG[values(CpG)[,"strand"]=="-",] 
       ranges(pos1)<- resize(ranges(pos1),extend+1)
-      ranges(pos2)<- resize(ranges(pos2),extend+1, start = FALSE)
+      ranges(pos2)<- resize(ranges(pos2),extend+1, fix = "end")
       CpG=IRanges::rbind(pos1,pos2)  
   }
   ranges(CpG) <-	 restrict(ranges(CpG),+1)
   total=length(genome_chr)
   pb <- txtProgressBar(min = 0, max = total, style = 3)
-  cat("Calculating CpG density for given regions...\n")
+  cat("\nCalculating CpG density for given regions...\n")
   
   seq=matrix(unlist(IRanges::lapply(CpG,function(x){
   	Sys.sleep(0.1)

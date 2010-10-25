@@ -7,7 +7,7 @@ Plots the results of the MEDIPS.calibrationCurve function.
 Visualizes the dependency of raw MeDIP-Seq signals and CpG densities together with the results of the calcibration curve calculation.
 }
 \usage{
-MEDIPS.plotCalibrationPlot(data=NULL, xrange=NULL, linearFit=FALSE, plot_chr="all", rpm=F)
+MEDIPS.plotCalibrationPlot(data=NULL, xrange=NULL, linearFit=FALSE, plot_chr="all", rpm=F, main=NULL)
 }
 \arguments{
   \item{data}{
@@ -29,6 +29,9 @@ When the parameter linearFit is set to TRUE, the plot contains the calculated li
 default="all". Please don't forget to call a e.g. png("file.png") function before calling the plot command using "all" because R might not be able to plot the full amount of data in reasonable time.
 Alternatively, you can specify a selected chromosome (e.g. chr1). 
 Here, the plot_chr parameter only affects the plot and does not affect the MEDIPS SET.
+}
+\item{main}{
+The main parameter is the same as the main parameter for the plot() command. If it remains empty, the main header of the plot will be Calibration plot.
 }
 }
 \value{

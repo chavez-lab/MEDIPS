@@ -1,7 +1,7 @@
 ##########
 ##Function to plot the calibration plot
 ##########
-MEDIPS.plotCalibrationPlot <- function(data=NULL, xrange=NULL, linearFit=FALSE, plot_chr="all", rpm=F){
+MEDIPS.plotCalibrationPlot <- function(data=NULL, xrange=NULL, linearFit=FALSE, plot_chr="all", rpm=F, main=NULL){
 	
 	if(class(data)!="MEDIPSset") stop("Must specify a MEDIPSset object.")	
 	
@@ -66,7 +66,8 @@ MEDIPS.plotCalibrationPlot <- function(data=NULL, xrange=NULL, linearFit=FALSE, 
 	
 	##Plot
 	#######
-	plot(signal, coupling, pch=".", main="Calibration plot", xlab=paste(descSignal, "", sep=""), ylab=paste(seq_pattern, " coupling factor", sep=""), col="lightblue")		
+	if(is.null(main)){main="Calibration plot"}	
+	plot(signal, coupling, pch=".", main=main, xlab=paste(descSignal, "", sep=""), ylab=paste(seq_pattern, " coupling factor", sep=""), col="lightblue")		
 	lines(calcurve_mean_signals,  calcurve_mean_coupling, col="red")	
 	if(linearFit){
 		lines(x_values, x_values_weighted, col="green")		

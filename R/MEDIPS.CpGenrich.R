@@ -23,7 +23,8 @@ MEDIPS.CpGenrich <-function(data=data,extend=NULL){
 	setTxtProgressBar(pb, i)
 	ranges(x)<-restrict(ranges(x),end=chr_lengths[which(genome_chr %in% names(x))])
    	y=DNAStringSet(getSeq(dataset, names=space(x), start=start(x), end=end(x)))
-	c(sum(vcountPattern("CG",y)),sum(vcountPattern("C",y)),sum(vcountPattern("G",y)),sum(width(y)),length(y))
+
+c(sum(as.numeric(vcountPattern("CG",y))),sum(as.numeric(vcountPattern("C",y))),sum(as.numeric(vcountPattern("G",y))),sum(as.numeric(width(y))),length(y))
        
   }),use.names=F),ncol=5,nrow=total,byrow=T)
   
@@ -46,8 +47,8 @@ MEDIPS.CpGenrich <-function(data=data,extend=NULL){
   alphabet=bsapply(params)
   genome.l=sum(as.numeric(alphabet))
  	
-  genome.C=as.numeric(sum(alphabet[2,]))
-  genome.G=as.numeric(sum(alphabet[3,]))
+  genome.C=as.numeric(sum(as.numeric(alphabet[2,])))
+  genome.G=as.numeric(sum(as.numeric(alphabet[3,])))
   genome.relH=genome.CG/genome.l*100
   genome.GoGe=(genome.CG*genome.l)/(genome.C*genome.G);
 	

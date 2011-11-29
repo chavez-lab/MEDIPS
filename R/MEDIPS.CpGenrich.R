@@ -10,14 +10,14 @@ MEDIPS.CpGenrich <-function(data=data,extend=NULL){
       pos2=CpG[values(CpG)[,"strand"]=="-",] 
       ranges(pos1)<- resize(ranges(pos1),extend+1)
       ranges(pos2)<- resize(ranges(pos2),extend+1, fix = "end")
-      CpG=IRanges::rbind(pos1,pos2)  
+      CpG=rbind(pos1,pos2)  
   }
   ranges(CpG) <-	 restrict(ranges(CpG),+1)
   total=length(genome_chr)
   pb <- txtProgressBar(min = 0, max = total, style = 3)
   cat("\nCalculating CpG density for given regions...\n")
   
-  seq=matrix(unlist(IRanges::lapply(CpG,function(x){
+  seq=matrix(unlist(lapply(CpG,function(x){
   	Sys.sleep(0.1)
         i=which(sort(genome_chr)%in%names(x) )
 	setTxtProgressBar(pb, i)

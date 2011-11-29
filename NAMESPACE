@@ -1,4 +1,20 @@
 useDynLib(MEDIPS)
+
+importClassesFrom(methods, character, numeric)
+importMethodsFrom(methods, show)
+importFrom(methods, "@<-", new)
+import(BiocGenerics)
+importMethodsFrom(Biostrings, alphabetFrequency, countPDict, matchPattern, PDict, reverseComplement, vcountPattern)
+importMethodsFrom(BSgenome, getSeq)
+importMethodsFrom(IRanges, cor, end, quantile, ranges, "ranges<-", resize, restrict, space, start, values, var, width)
+importFrom(Biostrings, DNAString, DNAStringSet)
+importFrom(BSgenome, bsapply)
+importFrom(graphics, abline, legend, lines, plot)
+importFrom(gtools, mixedsort)
+importFrom(IRanges, IRanges, RangedData)
+importFrom(stats, lm, t.test, wilcox.test)
+importFrom(utils, read.table, setTxtProgressBar, txtProgressBar,write.table)
+
 exportPattern("^[[:alpha:]]+")
 exportMethods(
     "bin_size",
@@ -35,16 +51,3 @@ exportMethods(
 exportClasses(
     "MEDIPSset" 
 )
-importClassesFrom(methods, character, numeric)
-importMethodsFrom(Biostrings, alphabetFrequency, countPDict, matchPattern, PDict, reverseComplement, vcountPattern)
-importMethodsFrom(BSgenome, getSeq)
-importMethodsFrom(IRanges, cor, end, quantile, ranges, "ranges<-", resize, restrict, space, start, values, var, width)
-importMethodsFrom(methods, show)
-importFrom(Biostrings, DNAString, DNAStringSet)
-importFrom(BSgenome, bsapply)
-importFrom(graphics, abline, legend, lines, plot)
-importFrom(gtools, mixedsort)
-importFrom(IRanges, IRanges, RangedData)
-importFrom(methods, "@<-", new)
-importFrom(stats, lm, t.test, wilcox.test)
-importFrom(utils, read.table, setTxtProgressBar, txtProgressBar,write.table)

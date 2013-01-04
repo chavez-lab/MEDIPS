@@ -2,7 +2,7 @@ useDynLib(MEDIPS)
 
 importClassesFrom(methods, character, numeric)
 importMethodsFrom(methods, show)
-importFrom(methods, "@<-", new)
+importFrom(methods, new)
 import(BiocGenerics)
 importMethodsFrom(Biostrings, alphabetFrequency, countPDict, matchPattern, PDict, reverseComplement, vcountPattern)
 importMethodsFrom(BSgenome, getSeq)

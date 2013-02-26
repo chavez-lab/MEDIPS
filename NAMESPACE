@@ -1,0 +1,34 @@
+#useDynLib(MEDIPS)
+exportPattern("^[[:alpha:]]+")
+exportMethods(
+    "sample_name",
+    "genome_name",
+    "number_regions",
+    "chr_names",
+    "chr_lengths",
+    "genome_count",
+    "extend",    
+    "show",
+    "window_size",
+    "shifted",
+    "uniq"
+)
+exportClasses(
+    "MEDIPSset", 
+    "COUPLINGset" 
+)
+importClassesFrom(methods, character, numeric)
+importMethodsFrom(Biostrings, alphabetFrequency, countPDict, matchPattern, PDict, reverseComplement, vcountPattern)
+importMethodsFrom(BSgenome, getSeq)
+importMethodsFrom(IRanges, cor, end, quantile, ranges, "ranges<-", resize, restrict, space, start, values, var, width,unique,as.vector)
+importMethodsFrom(methods, show)
+importFrom(Biostrings, DNAString, DNAStringSet)
+importFrom(BSgenome, bsapply)
+importFrom(graphics, abline, legend, lines, plot)
+importFrom(gtools, mixedsort)
+importFrom(IRanges, IRanges, RangedData)
+importFrom(stats, lm, t.test, wilcox.test)
+importFrom(utils, read.table, setTxtProgressBar, txtProgressBar,write.table)
+importFrom(Rsamtools, scanBam,ScanBamParam,scanBamFlag)
+importFrom(DNAcopy,CNA,segment,smooth.CNA,getbdry)
+importFrom(biomaRt,useMart,getBM)

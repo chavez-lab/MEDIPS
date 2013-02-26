@@ -1,0 +1,677 @@
+%\VignetteIndexEntry{MEDIPS}
+%\VignetteKeywords{}
+%\VignetteDepends{MEDIPS, BSgenome, BSgenome.Hsapiens.UCSC.hg19, edgeR, DNAcopy, rtracklayer}
+%\VignettePackage{MEDIPS}
+
+\documentclass[a4paper]{article}
+
+\usepackage{natbib}
+
+\title{MEDIPS Tutorial}
+\author{Lukas Chavez}
+
+\begin{document}
+
+\maketitle
+
+%\pagenumbering{roman}
+
+\tableofcontents
+
+\section{Introduction}
+MEDIPS was developed for analyzing data derived from methylated DNA immunoprecipitation (MeDIP) experiments \citep{Weber2005a} followed by sequencing (MeDIP-seq).
+However, MEDIPS provides several functionalities for the analysis of any other kind of quantitative sequencing data (e.g. ChIP-seq, MBD-seq, CMS-seq and others) including
+calculation of differential coverage between groups of samples as well as saturation and correlation analyses.
+ 
+In detail, MEDIPS adresses the following aspects in the context of IP-seq data analysis: 
+
+\begin{itemize}
+\item 
+estimating the reproducibility for obtaining full genome short read coverage profiles (saturation analysis), 
+\item 
+calculating genome wide sequencing signal densities at a user specified resolution (counts, rpkm),
+\item 
+calculating differentially coverage comparing two groups of IP-seq samples,
+\item 
+correcting for copy number variations putative present in the genomic background of the samples based on Input samples (if available),
+\item 
+export of raw and normalized data as Wiggle files for visualization in common genome browsers (e.g. the UCSC genome browser).
+\end{itemize} 
+
+In addition, MEDIPS provides the following MeDIP/MBD-seq specific functionalities:
+\begin{itemize}
+\item 
+analyzing the coverage of genome wide DNA sequence patterns (e.g. CpGs) by the given reads,
+\item 
+calculating a CpG enrichment factor as a quality control for the MeDIP specific immunoprecipitation,
+\item 
+calculating genome wide sequence pattern densities (e.g. CpGs) at a user specified resolution,
+\item 
+plotting of calibration plots as a data quality check and for a visual inspection of the dependency between local sequence pattern (e.g. CpG) densities and MeDIP signals,
+\item 
+normalization of MeDIP-seq data with respect to local sequence pattern (e.g. CpG) densities (relative methylation score),
+\end{itemize} 
+
+MEDIPS starts where the mapping tools stop (typically bam files) and can be used for any genome of interest, limited by the available genomes within the Bioconductor \texttt{BSgenome} package, only.
+In case a genome of interest is not available as a \texttt{BSgenome} package but the sequence of the genome is available, a custom \texttt{BSgenome} package can be generated, 
+please see the "How to forge a BSgenome data package" manual of the \texttt{BSgenome} package.
+
+
+
+\section{Updates}
+Except of several bug fixes, there was no major update of the MEDIPS package since its release mid of 2010.
+With the release of version 1.10.0, there are several conceptual updates which result in major changes concerning data input, function and parameter definitions, and result formats.
+Hence, we apologize for any inconveniences, but we believe that these updates were necessary w.r.t. methodology, functionality, and performance (speed and memory usage).
+
+Major updates include:    
+
+\begin{itemize}
+\item 
+MEDIPS allows for including replicates. For each group (control, treatment, control input, and treatment input) an arbitrary number of replicates can be provided.  
+\item 
+The concept of smaller bins within genome wide windows is replaced by counting short read coverage directly at genome wide windows.
+Normalization and differential coverage is then calculated window-wise.
+\item 
+Genome wide differential coverage between two groups of samples can be calculated by modelling a negative binomial distribution.
+For this, MEDIPS applies the sophisticated Bioconductor package edgeR \citep{Robinson2010} and its functions for normalization, estimation of overdispersion, and statistical testing.
+Therefore, MEDIPS not only allows to calculate differentially methylated regions from MeDIP-seq data 
+but also allows to process any other kind of quantitative sequencing data (e.g. ChIP-seq) in order to calculate genome wide differential coverage. 
+Differential coverage can then be interpreted as either differential methylation (MeDIP/MBD or ChIP for histone modifications), differential hydroxymethylation (CMS), 
+differential binding (ChIP for transcription factors) or simply as sample specific enrichments (e.g. ChIP vs. Input).  
+\item 
+MEDIPS allows for estimating copy number variations (CNVs) when Input data for both conditions (Input control and Input treatment) is provided. 
+For this, MEDIPS applies the Bioconductor package DNAcopy \citep{Venkatraman}. 
+Subsequently, genomic regions showing differential coverage in the IP samples can be corrected for copy number variations present in the genomic background of the samples.
+\item
+MEDIPS accepts bam files as input.
+\item
+MEDIPS accepts fixedStep wiggle files as input.
+\end{itemize} 
+
+
+\section{Installation}
+
+In order to execute MEDIPS, you need to have some other packages installed in your R library. 
+These are \texttt{BSgenome}, \texttt{edgeR}, \texttt{DNAcopy}, \texttt{Rsamtools}, \texttt{rtracklayer}, and \texttt{gtools}, as well as the packages they depend on.
+You can check this, by starting R and typing 
+
+<<echo=TRUE, eval=F>>=
+packageDescription("BSgenome")
+packageDescription("gtools")
+packageDescription("edgeR")
+packageDescription("DNAcopy")
+packageDescription("Rsamtools")
+packageDescription("rtracklayer")
+@
+
+R will inform you in case you do not have these packages installed.
+In case you do not have these necessary packages installed, start R and try typing 
+
+<<echo=TRUE, eval=F>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("BSgenome")
+biocLite("gtools")
+biocLite("edgeR")
+biocLite("DNAcopy")
+biocLite("Rsamtools")
+biocLite("rtracklayer")
+@
+
+Next, it is necessary to install the MEDIPS package into your R environment.
+Start R and enter:
+
+<<echo=TRUE, eval=F>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("MEDIPS")
+@
+
+Next, it is necessary to have the genome of interest available in your R environment. 
+As soon as you have the BSgenome package installed and the library loaded using 
+
+<<echo=T, eval=F, results=hide>>=
+library("BSgenome")
+@
+you can list all available genomes by typing
+<<echo=TRUE, eval=F>>=
+available.genomes()
+@
+
+In the given example, we mapped the short reads against the human genome build hg19. 
+Therefore, we download and install this genome build:
+
+<<echo=TRUE, eval=F>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("BSgenome.Hsapiens.UCSC.hg19")
+@
+This takes some time, but has to be done only once for each reference genome.
+
+Finally, the MEDIPS workflow described below requires access to example data available in the \texttt{MEDIPSData} package which can be installed by typing:
+
+<<echo=TRUE, eval=F>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("MEDIPSData")
+@
+
+
+
+
+
+\section{Preparations}
+First, the MEDIPS package has to be loaded. 
+Herewith, the dependent libraries \texttt{BSgenome}, \texttt{Rsamtools}, \texttt{edgeR}, \texttt{DNAcopy}, \texttt{gtools}, \texttt{rtracklayer} as well as the packages they depend on will be loaded.
+
+<<echo=T, eval=T, results=hide>>=
+library(MEDIPS)
+@
+
+In the given example, we mapped the short reads against the human genome build hg19. 
+Therefore, we load the pre-installed (see chapter 3) hg19 library:
+
+<<echo=T, eval=T, results=hide>>=
+library(BSgenome.Hsapiens.UCSC.hg19)
+@
+
+MEDIPS requires mapping results in bam format as input, which is a standard format for mapping results.
+In addition, MEDIPS allows for mapping results in tab-separated (|) BED text files (chr | start | end | name | score | strand).
+MEDIPS can also directly read the precomputed genome coverage from fixedStep wiggle files. In this case, all specified chromosomes have to be described completely.
+
+\begin{sloppypar}
+In order to present a typical MEDIPS workflow, we access BAM files as well as preprocessed data included in the data package \texttt{MEDIPSData}.
+In order to load the library, please type:
+
+<<echo=T, results=hide, eval=T, keep.source=FALSE>>=
+library("MEDIPSData")
+@
+
+The example data has been generated based on the following BAM files:
+
+\texttt{hESCs.MeDIP.Rep1.chr22.bam} (7.6M), 
+\texttt{hESCs.MeDIP.Rep2.chr22.bam} (14M),
+\texttt{hESCs.MeDIP.Rep3.chr22.bam} (9.1M), 
+\texttt{hESCs.Input.chr22.bam} (4.9M), 
+\texttt{DE.MeDIP.Rep1.chr22.bam} (12M), 
+\texttt{DE.MeDIP.Rep2.chr22.bam} (14M), 
+\texttt{DE.MeDIP.Rep3.chr22.bam} (13M), and
+\texttt{DE.Input.chr22.bam} (11M)
+\end{sloppypar}
+
+These bam files are the bowtie \citep{Langmead2009} mapping results of MeDIP-seq data derived from three replicates of human embryonic stem cells (hESCs) and 
+replicates of differentiated hESCs (definitive endoderm, DE) \citep{Chavez2010}. 
+In addition, for each condition there is one bam file containg the mapping results of corresponding Input-seq data. 
+
+In this manual, we access some BAM files located in the \texttt{extdata} subdirectory of the MEDIPSData package.
+We have to point to the example BAM files as follows:
+
+<<echo=T, results=hide, eval=T, keep.source=FALSE>>=
+bam.file.hESCs.Rep1.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep1.chr22.bam", package="MEDIPSData")
+bam.file.hESCs.Input = system.file("extdata", "hESCs.Input.chr22.bam", package="MEDIPSData")
+bam.file.DE.Input = system.file("extdata", "DE.Input.chr22.bam", package="MEDIPSData")
+@
+
+Some other bam files have been already preprocessed and will be accessed as internally saved RData objects (see below).
+ 
+Typically, you will directly specify your data file at the \texttt{file} parameter.
+It is also possible to specify the full path to your input file together with the file name.
+
+Next, we define several parameters which will be used throughout the manual.
+The reference genome is hg19:
+<<echo=T, eval=T, results=hide>>=
+BSgenome="BSgenome.Hsapiens.UCSC.hg19"
+@
+MEDIPS will replace all reads which map to exactly the same start and end positions on the same strand by only one representative:  
+<<echo=T, eval=T, results=hide>>=
+uniq=TRUE
+@
+All reads will be extended to a length of 300nt according to the given strand information:
+<<echo=T, eval=T, results=hide>>=
+extend=300
+@
+As an alternative to the extend parameter, the \texttt{shift} parameter can be specified.
+Here, the reads are not extended but shifted by the specified number of nucleotides with respect to the given strand infomation.
+One of the two parameters \texttt{extend} or \texttt{shift} has to be 0. 
+<<echo=T, eval=T, results=hide>>=
+shift=0
+@
+The genome will be divided into adjacent windows of length 100nt and all further calculations (short read coverage, differential coverage between conditions etc.) will be calculated for each window. 
+<<echo=T, eval=T, results=hide>>=
+ws=100
+@
+In this manual, we are going to process only one chromosome (i.e. chr22) in order to exemplify a typical workflow.
+Therefore, we specify the \texttt{chr.select} parameter.
+Please note, the example bam files contain only data for chr22 anyway. Therefore, it is not necessary to explicitly specify this chromosome in this example. 
+<<echo=T, eval=T, results=hide>>=
+chr.select="chr22"
+@
+
+
+
+
+\section{Quality controls}
+MEDIPS provides three different quality controls. 
+In this section, the quality controls are demonstrated for the MeDIP-seq hESCs replicate \texttt{hESCs\_Rep1\_MeDIP.bam}.  
+
+\subsection{Saturation analysis}
+The saturation analysis addresses the question, whether the given set of mapped reads is sufficient to generate a saturated and reproducible coverage profile of the reference genome.
+Only if there is a sufficient number of short reads, the resulting genome wide coverage profile will be reproducible by another independent set of a similar number of short reads.
+The saturation analysis is not specific for MeDIP-seq data and can be applied to other types of sequencing data like e.g. ChIP-seq.
+
+<<echo=TRUE, results=hide, eval=T, keep.source=FALSE>>=
+sr=MEDIPS.saturation(file=bam.file.hESCs.Rep1.MeDIP, BSgenome=BSgenome, uniq=uniq, extend=extend, shift=shift, window_size=ws, chr.select=chr.select, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE)
+@
+
+The saturation analysis divides the total set of available regions into two distinct random sets (\texttt{A} and \texttt{B}) of equal size.
+Both sets \texttt{A} and \texttt{B} are again divided into random subsets of equal size where the number of subsets is determined by the parameter \texttt{nit} (default=10).
+For each set, \texttt{A} and \texttt{B}, the saturation analysis iteratively selects an increasing number of subsets and 
+calculates short read coverage at genome wide windows where the window sizes are defined by the \texttt{window\_size} parameter.
+In each iteration step, the resulting genome wide coverages for the current subsets of \texttt{A} and \texttt{B} are compared using pearson correlation. 
+As the number of considered reads increases during each iteration step, it is assumed that the resulting genome wide coverages become more similar, 
+a dependency that is expressed by an increased correlation. 
+
+It has to be noted that the saturation analysis can be performed on two independent sets of short reads only. 
+Therfore, a true saturation for one given sample can only be calculated for half of the available short reads.
+As it is of interest to examine the reproducibility for the total set of available short reads of the given sample, the saturation analysis is followed by an estimated saturation analysis.
+For the estimated saturation analysis, the full set of given regions is artifically doubled by considering each given region twice.
+Subsequently, the described saturation analysis is performed on the artificially doubled set of regions (see also Supplementary Methods in \citep{Chavez2010}).
+
+The results of the saturation and of the estimated saturation analysis can be viewed by typing
+<<echo=TRUE, eval=T>>=
+sr
+@
+
+The maximal obtained correlation of the saturation analysis is stored at the \texttt{maxTruCor} slot 
+and the maximal obtained correlation of the estimated saturation analysis is stored at the \texttt{maxEstCor} slot of the saturation results object 
+(here \texttt{sr}, first column: total number of considered reads, second column: correlation).
+The results of each iteration step are stored in the \texttt{distinctSets} and \texttt{estimation} slots for the saturation and estimated saturation analysis, respectively 
+(first column: total number of considered reads, second column: obtained correlation).
+
+In addition, the results can be visualized by typing
+<<echo=TRUE, fig=TRUE, eval=T>>=
+MEDIPS.plotSaturation(sr)
+@
+
+Further parameters that can be specified for the saturation analysis are:
+\begin{itemize}
+\item
+\texttt{nrit}: methods that randomly select data entries may be processed several times in order to obtain more stable results. 
+By specifying the \texttt{nrit} parameter (default=1) it is possible to run the saturation analysis several times. 
+The final results returned to the saturation results object are the averaged results of all random iteration steps.  
+\item 
+\texttt{empty\_bins}: can be either TRUE or FALSE (default TRUE). This parameter affects the way of calculating correlations between the resulting genome wide coverages. 
+If there occur genomic bins which contain no overlapping regions, neither from the subset(s) of \texttt{A} nor from the subset(s) of \texttt{B}, 
+these windows will be neglected when the paramter is set to FALSE.
+\item 
+\texttt{rank}: can be either TRUE or FALSE (default FALSE). This parameter also effects the way of calculating correlations between the resulting genome vectors.
+If \texttt{rank} is set to TRUE, the correlation will be calculated for the ranks of the bins instead of considering the counts (i.e. spearman correlation).
+Setting this parameter to TRUE is a more robust approach which reduces the effect of possible occuring outliers (i.e. windows with very high counts) on the correlation.   
+\end{itemize} 
+
+
+
+\subsection{Sequence Pattern Coverage}
+The main idea of the sequence pattern coverage analysis is to test the number of CpGs (or any other predefined sequence pattern) covered by the given short reads.
+In addition, the depth of coverage per CpG is tested.
+The sequence pattern coverage analysis can be started by typing
+
+<<echo=TRUE, results=hide, eval=T, keep.source=FALSE>>=
+cr=MEDIPS.seqCoverage(file=bam.file.hESCs.Rep1.MeDIP, pattern="CG", BSgenome=BSgenome, chr.select=chr.select, extend=extend, shift=shift, uniq=uniq)
+@
+
+The sequence pattern coverage results object (here \texttt{cr}) contains four different slots:
+\begin{itemize}
+\item
+\texttt{cov.res}: is a vector of length equal to the total number of sequence patterns (e.g. CpGs). The entries correspond to the number of overlapping regions (coverage).
+\item 
+\texttt{pattern}: the tested sequence pattern (e.g. CpG)
+\item 
+\texttt{numberReads}: the total number of tested reads
+\item 
+\texttt{numberReadsWO}: the number of reads which do not cover a tested sequence pattern
+\end{itemize} 
+
+
+The results of the coverage analysis can be visualized by a pie chart:
+
+<<echo=TRUE, fig=TRUE, eval=T, keep.source=FALSE>>=
+MEDIPS.plotSeqCoverage(seqCoverageObj=cr, type="pie", cov.level = c(0,1, 2, 3, 4, 5))
+@
+
+The pie chart illustrates the fraction of CpGs covered by the given reads according to their coverage level.
+The visualized coverage levels can be adjusted by the \texttt{cov.level} parameter.
+
+Alternatively, a histogram can be plotted which visalizes the total number of CpGs which have been covered at different level:
+<<echo=TRUE, fig=TRUE, eval=T, keep.source=FALSE>>=
+MEDIPS.plotSeqCoverage(seqCoverageObj=cr, type="hist", t = 15, main="Sequence pattern coverage, histogram")
+@
+The parameter \texttt{t} specifies the maximal coverage depth to be plotted (here: 15 reads per sequence pattern). 
+
+
+
+
+
+\subsection{CpG Enrichment}
+As a quality check for the enrichment of CpG rich DNA fragments obtained by the immunoprecipitation step of a MeDIP/MBD experiment, MEDIPS provides the functionality to calculate CpG enrichment values. 
+The main idea is to test the enrichment of CpGs within the genomic regions covered by the given set of short reads compared to the full reference genome.
+For this, MEDIPS counts the number of Cs, the number of Gs, the number CpGs, and the total number of bases within the specified reference genome. 
+Subsequently, MEDIPS calculates the relative frequency of CpGs and the observed/expected ratio of CpGs present in the reference genome.
+Additionally, MEDIPS calculates the same for the DNA sequences underlying the given regions.
+The final enrichment values result by dividing the relative frequency of CpGs (or the observed/expected value, respectively) of the regions by 
+the relative frequency of CpGs (or the observed/expected value, respectively) of the reference genome.
+
+<<echo=TRUE, eval=F, results=hide, keep.source=FALSE>>=
+er=MEDIPS.CpGenrich(file=bam.file.hESCs.Rep1.MeDIP, BSgenome=BSgenome, chr.select=chr.select, extend=extend, shift=shift, uniq=uniq)
+@
+
+The enrichment results object (here \texttt{er}) contains several slots which show the number of Cs, Gs, and CpGs within the reference genome and within the given regions.
+Additionally, there are slots that show the relative frequency as well as the observed/expected CpG ratio within the reference genome and within the given regions.
+Finally, the slots \texttt{enrichment.score.relH} and \texttt{enrichment.score.GoGe} indicate the enrichment of CpGs within the given regions compared to the reference genome.
+For short reads derived from Input experiments (i.e. sequencing of none-enriched DNA fragments), the enrichment values should be close to 1.
+In contrast, a MeDIP-seq experiment should return CpG rich sequences what will be indicated by increased CpG enrichment scores.
+
+
+
+
+
+\section{Case study: Genome wide methylation and differential coverage between two conditions}
+Here, we calculate genome wide short read coverage and methylation profiles for the three hESCs and for the three DE replicates \citep{Chavez2010}.
+In addition, we calculate differential coverage (here this isinterpreted as differential methylation) between both conditions.
+
+\subsection{Data Import and Preprocessing}
+First, we create a MEDIPS SET for the first replicate from the undifferentiated hESCs:
+<<echo=TRUE, eval=F, results=hide, keep.source=FALSE>>=
+hESCs_MeDIP = MEDIPS.createSet(file=bam.file.hESCs.Rep1.MeDIP, BSgenome=BSgenome, extend=extend, shift=shift, uniq=uniq, window_size=ws, chr.select=chr.select)
+@
+where the parameters remain as defined in section \texttt{Preparations}.
+Subsequently, we have to concatenate the remaining two replicates to the first MEDIPS SET resulting in a list of MEDIPS SETs.
+In principle, this would look like:
+ 
+<<echo=TRUE, eval=F, results=hide, keep.source=FALSE>>=
+bam.file.hESCs.Rep2.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep2.chr22.bam", package="MEDIPSData")
+hESCs_MeDIP = c(hESCs_MeDIP, MEDIPS.createSet(file=bam.file.hESCs.Rep2.MeDIP, BSgenome=BSgenome, extend=extend, shift=shift, uniq=uniq, window_size=ws, chr.select=chr.select))
+@
+
+However, here we load the preprocessed lists of MeDIP-seq MEDIPS SETs available in the \texttt{MEDIPSData} package:
+<<echo=TRUE, eval=T, results=hide, keep.source=FALSE>>=
+data(hESCs_MeDIP)
+data(DE_MeDIP)
+@
+
+
+For the Input-seq data sets, we explicitely create MEDIPS SETs (also named INPUT SETs) as follows
+<<echo=TRUE, eval=T, results=hide, keep.source=FALSE>>=
+hESCs_Input = MEDIPS.createSet(file=bam.file.hESCs.Input, BSgenome=BSgenome, extend=extend, shift=shift, uniq=uniq, window_size=ws, chr.select=chr.select)
+DE_Input = MEDIPS.createSet(file=bam.file.DE.Input, BSgenome=BSgenome, extend=extend, shift=shift, uniq=uniq, window_size=ws, chr.select=chr.select)
+@
+
+
+
+In principle, it is possible to add as many samples to each list as available per condition. 
+This is valid for both the MeDIP and Input sets.
+
+For CpG density dependent normalization of MeDIP-seq data, we need to generate a coupling set.
+The coupling set must be created based on the same reference genome, the same set of chromosomes, and with the same window size used for the MEDIPS SETs.
+For this, we specify the first MEDIPS SET in the \texttt{hESCs} object as reference,
+but any of the other MEDIPS SETs would be fine as well, because all of them consist of the same set of chromosomes (here only chr22, hg19) and have been generated with the same window size:
+
+<<echo=TRUE, eval=T, results=hide, keep.source=FALSE>>=
+CS = MEDIPS.couplingVector(pattern="CG", refObj=hESCs_MeDIP[[1]])
+@
+
+\subsection{Coverage, methylation profiles and differential coverage}
+In principle, it is possible to calculate genome wide coverage and methylation profiles for only one MEDIPS SET or for only one group of MEDIPS SETs using the function \texttt{MEDIPS.meth}.
+However, in this case study we also want to calculate differential methylation between two conditions. As soon as two groups of MEDIPS SETs are provided to the \texttt{MEDIPS.meth} function
+differential coverage will be calculated.
+
+<<echo=TRUE, eval=T, results=hide, keep.source=FALSE>>=
+mr.edgeR = MEDIPS.meth(MSet1=hESCs_MeDIP, MSet2=DE_MeDIP, CSet=CS, ISet1=hESCs_Input, ISet2=DE_Input, p.adj="bonferroni", diff.method="edgeR", prob.method="poisson", MeDIP=T, CNV=F, type="rpkm", minRowSum=1)
+@
+
+Parameters that can be specified are:
+\begin{itemize}
+\item
+\texttt{MSet1}: first group of MEDIPS SETs. Please specify at least one set.
+\item
+\texttt{MSet2}: second group of MEDIPS SETs. Differential coverage will be calculated, if MSet1 and MSet2 are not empty. 
+\item
+\texttt{CSet}: a coupling set (typically a CpG coupling set). Mandatory for normalization of MeDIP data. Can be skipped, if MeDIP=F (see below).
+\item
+\texttt{ISet1}: first group of INPUT SETs (corresponding to MSet1).
+\item
+\texttt{ISet2}: second group of INPUT SETs (corresponding to MSet2). Copy number variations will be calculated, if ISet1 and ISet2 are not empty. Can be swithced off by setting CNV=F (see below). 
+\item
+\texttt{p.adj}: in order to correct p.values derived from the differential coverage analysis for multiple testing, MEDIPS uses Rs' \texttt{p.adjust} function.
+Therefore, the following methods are available: holm, hochberg, hommel, bonferroni, BH, BY, fdr, none.
+\item 
+\texttt{diff.method}: method for calculating differential coverage. Available methods: \texttt{ttest} and \texttt{edgeR}.
+The \texttt{ttest} method will be calculated only in case there are at least three replicates/MEDIPS SETs per group.
+The \texttt{ttest} method can be applied to the rpkm or CpG density normalized rms values as specified by the \texttt{type} parameter (see below).
+The \texttt{ttest} method adds four vectors to the result table: \texttt{score.log2.ratio}, \texttt{score.p.value}, \texttt{score.adj.p.value}, and \texttt{score} where \texttt{score = (-log10(p.value)*10)*log(ratio)}.
+As an alternative, \texttt{edgeR} can be applied for testing differential coverage in genome wide windows even for less than 3 replicates per group.
+However, in case there is only one MEDIPS SET per group, the dispersion will be set to 0.01 (please consider section "What to do if you have no replicates" of edgeR's User's Guide).
+The weighted trimmed mean of M-values (TMM) method is used to calculate scale factors between libraries and the library whose upper quartile is closest to the mean upper quartile is used.
+The \texttt{edgeR} method will be applied to the counts of the genome wide windows.
+The \texttt{edgeR} method adds four vectors to the result table which are edgeR's exactTest standard output: \texttt{edgeR.logFC}, \texttt{edgeR.logCPM}, \texttt{edgeR.p.value}, and \texttt{edgeR.adj.p.value}.
+\item 
+\texttt{prob.method}: Provided that the parameter \texttt{MeDIP} is set to TRUE, MEDIPS will calculate CpG density dependent probability values in order to estimate the methylation status of genome wide windows. 
+For this, MEDIPS calculates a series of CpG coupling factor dependent probability distributions. The methylation status of each window will be estimated by its according distribution.
+There are two probability distributions available: \texttt{poisson} and \texttt{negBinomial}.  
+Please note that we consider this method as poorly conceived and under further development.    
+\item 
+\texttt{MeDIP}: This parameter determines, if a CpG density dependent normalization values (rms and prob) will be calculated for the MEDIPS SETs given at the slots \texttt{MSet1} and \texttt{MSet2}.  
+\item 
+\texttt{CNV}: In case there are INPUT SETs provided at both Input slots (i.e. \texttt{ISet1} and \texttt{ISet2}), 
+copy number variation will be tested by applying the package \texttt{DNAcopy} to the window-wise log-ratios calculated based on the the means per group. 
+By setting \texttt{CNV}=F this function will be disabled. 
+Please note, there is the function \texttt{MEDIPS.addCNV} which allows to run the CNV analysis on two groups of INPUT SETs using another (typically increased) window size.
+Subsequently, the \texttt{MEDIPS.addCNV} function matches its CNV results to a given result table as previously generated by the \texttt{MEDIPS.meth} function.
+This allows for calculating CNVs for larger windows what might be more appropriate in case of low sequencing depth of Input-seq data.
+Moreover, the time consuming CNV calculation is accelerated for larger windows and the results will be matched to a \texttt{MEDIPS.meth} derived result table previously generated for smaller windows.
+\item 
+\texttt{type}: In case \texttt{diff.method} has been set to \texttt{ttest}, this parameter specifies, if differential coverage is calculated based on the rpkm or rms values.
+This parameter is ignored in case the edgeR method is selected as the underlying model requires count data.  
+\item 
+\texttt{chr}: specify one or several chromosomes (e.g. c("chr1", "chr2")), if only a subset of available chromosomes have to be processed. 
+\item
+\texttt{minRowSum}: number of reads per window, that are required for the test for differential methylation (default=1).
+\end{itemize} 
+
+The returned object (here \texttt{mr.edgeR}) is a list of vectors (all of the same length) where the rows correspond to genome wide windows and will be considered as the result table. 
+The number of vectors depends on the number of provided MEDIPS SETs, the number of INPUT SETs, and on the specification of several parameters including \texttt{diff.methods}, \texttt{MeDIP}, and \texttt{CNV}.
+For each window and for each MEDIPS or INPUT SET, there will be vectors for the \texttt{counts} and \texttt{rpkm} values.
+For MEDIPS SETs there can be vectors for \texttt{rms} and \texttt{prob} values (if \texttt{MeDIP}=T).
+For each group with more than one provided MEDIPS or INPUT SETs, respectively, there will be an additional vector containing the means over the counts and rpkm values (and for rms and prob, if available).
+Moreover, there are vectors for log2 ratios (MSet1/MSet2), p.values, and adjusted p.values when differential coverage has been calculated.
+Optionally, there will be a vector of log2 ratios (ISet1/ISet2) as a result of the CNV analysis, in case two groups of INPUT SETs have been provided (and in case \texttt{CNV}=T) or in case a CNV analysis has been added afterwards by applying the function \texttt{MEDIPS.addCNV} (see below).
+ 
+\subsection{Differential coverage: select significant windows}
+As we have processed two groups of MEDIPS SETs, we are now interested in genomic windows which show significant differential coverage:
+
+<<echo=TRUE, eval=T, keep.source=FALSE>>=
+mr.edgeR.s = MEDIPS.selectSig(results=mr.edgeR, p.value=0.1, adj=T, ratio=NULL, bg.counts=NULL, CNV=F)
+@
+
+Here, we set a thresold of 0.1 for the adjusted p.values in order to select significant windows. 
+There are the following filter criteria available:
+
+\begin{itemize}
+\item 
+\texttt{p.value}: this is the p.value threshold as calculated either by the \texttt{ttest} or \texttt{edgeR} method
+\item
+\texttt{adj}: this parameter specifies whether the p.value or the adjusted p.values is considered
+\item 
+\texttt{ratio}: this parameter sets an additional thresold for the ratio where the ratio is either \texttt{score.log2.ratio} or \texttt{edgeR.logFC} depending on the previously selected method.
+Please note, the specified value will be transformed into log2 internally.
+\item 
+\texttt{bg.counts}: as an additional filter parameter, it is possible to require a minimal number of reads per window in at least one of the MEDIPS SET groups.
+For this, the mean of counts per group is considered. The parameter \texttt{bg.counts} can either be a concrete integer or an appropriate column name of the result matrix.
+By specifying a column name (here e.g. \texttt{bg.counts="hESC.Input.bam.counts"} or \texttt{bg.counts="MSets1.counts.mean"}), 
+the 0.95 quantile of the according genome wide count distribution is determined and used as a minimal background threshold (please note, only count columns are reasonable).  
+\item 
+\texttt{CNV}: The information on CNVs present in the samples of interest can be used for correcting differential coverage observed in the corresponding IP data (e.g. MeDIP or ChIP data).
+In the given example data, we do not expect extensive events of copy number variation between pluripotent and differentiated hESCs because both samples have been derived from the same cell line.
+However, samples derived from e.g. cancer tissues might show an relevant occurence of copy number variations.
+Therefore, when comparing MeDIP- or ChIP-seq data derived from cancer tissue against MeDIP- or ChIP-seq data derived from corresponding healthy tissue,
+an event of differential methylation might be explained in part or entirely by a local CNV.
+In case Input data has been provided for both conditions, MEDIPS is capable of calculating genome wide CNV ratios by employing the package DNAcopy.
+In case the parameter \texttt{CNV} is set to TRUE, MEDIPS will consider only genomic windows having a CNV corrected IP ratio higher than the specified ratio threshold (specification of the ratio parameter is required in this case).
+\end{itemize} 
+
+\subsection{Merge frames}
+After having identified and extracted genomic windows showing significant differential coverage between conditions, 
+it remains of interest to merge neighboring significant windows into a larger continuous region.
+Please note, the result object \texttt{mr.edgeR.s} returned by the \texttt{MEDIPS.selectSig} contains genomic regions that show differential coverage into both directions, 
+i.e. either a higher coverage in the group of samples in MSet1 (here hESCs) over the group of samples in MSet2 (here DE) or vice versa.
+In order to isolate the subset of genomic regions that show e.g. higher coverage in MSet2 over MSet1, we use the following R syntax:
+
+<<echo=TRUE, eval=T, keep.source=FALSE>>=
+mr.edgeR.s.gain = mr.edgeR.s[which(mr.edgeR.s[,grep("logFC", colnames(mr.edgeR.s))]<0),]
+@
+
+Subsequently, the function \texttt{MEDIPS.mergeFrames} can be applied to merge all adjacent significant regions into one region which will be finally regarded as one event of differential coverage: 
+
+<<echo=TRUE, eval=T, keep.source=FALSE, results=hide>>=
+mr.edgeR.s.gain.m = MEDIPS.mergeFrames(frames=mr.edgeR.s.gain, distance=0)
+@
+
+Here we interpret the selected and merged genomic regions as differentially methylated regions (DMRs) showing gain of methylation during differentiation.
+
+The \texttt{distance} parameter allows to merge windows having an according gap in between.
+Please note, merged windows are represented only by their genomic coordinates and do not contain any summarized values.
+
+    
+
+\subsection{Regions of interest}
+MEDIPS provides the functionality to select subsets of the result matrix returned by the \texttt{MEDIPS.meth} function according to any given set of regions of interest (ROIs).
+As an example, we consider the set of merged windows (here \texttt{mr.edgeR.s.loss.m}, see previous section) as a set of ROIs:
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+rois=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.loss.m, columns="counts", summarize=F)
+@
+
+The function \texttt{MEDIPS.selectROIs} will select all genomic windows in the original result table (here \texttt{mr.edgeR})
+which are included in the boundaries defined by the genomic coordinates of the given set of ROIs.
+The number of returned windows depends on the window size and on the length of the provided ROIs.
+Please note, only selected columns will be returned as determined by the \texttt{columns} parameter.
+In this example, the function selects all columns which contain count values.
+In addition, it is possible to specify concrete column names and to provide several identifiers of interest like e.g. c("counts", "rpkm").
+
+As an alternative for extracting all windows included in the genomic ranges of the given ROIs,
+it is possible to calculate mean values over the individual windows for each ROI, a behaviour that is controlled by the parameter \texttt{summarize}.
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+rois.s=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.m, columns="counts", summarize=T)
+@
+
+For each ROI and for each specified column, there will be one mean value returned.
+
+
+\section{Miscellaneous}
+In this section we discuss several additional functionalities currently available in the MEDIPS package. 
+
+\subsection{Calibration Plot}
+MeDIP-seq data is transformed into genome wide relative methylation scores by a previously presented CpG dependent normalization method \citep{Chavez2010}.
+Normalization is based on the dependency between short read coverage and CpG density at genome wide windows. 
+This dependency has been originally demonstrated by Down et al. \citep{Down2008} and can be visualized as a calibration plot.
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+MEDIPS.plotCalibrationPlot(CSet=CS, input=F, main="Calibration Plot", MSet=hESCs_MeDIP[[1]], plot_chr="chr22",  rpkm=T,  xrange=T)
+@
+
+\begin{itemize}
+\item
+\texttt{CS}: the COUPLING SET
+\item 
+\texttt{input}: specifies whether the given data set at \texttt{MSet} is MeDIP or Input data. In case of Input data, no linear regression will be calculated.
+\item 
+\texttt{main}: the main of the figure
+\item 
+\texttt{MSet}: the MEDIPS SET (or INPUT SET, respectively)
+\item 
+\texttt{plot\_chr}: the chromsome for which the calibration plot will be generated
+\item 
+\texttt{rpkm}: specifies, if the MeDIP data range will be plotted in count or rpkm format
+\item 
+\texttt{xrange}: if set to TRUE, only the lower data range of the calibration plot will be visualized
+\end{itemize} 
+
+Please note, it is strongly recommended to direct the output to a graphics device like e.g. png().    
+
+
+
+\subsection{Export Wiggle Files}
+MEDIPS allows to export genome wide coverage profiles as wiggle files for visualization in common genome browsers.
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+MEDIPS.exportWIG(Set=hESCs_MeDIP[[1]], file="hESC.MeDIP.rep1.wig", format="rpkm", descr="")
+@
+
+\begin{itemize}
+\item
+\texttt{Set}: a MEDIPS or COUPLING SET. In case of a COUPLING SET, the \texttt{format} parameter must be set to \texttt{pdensity} because in this case a sequence pattern (e.g. CpG) density profile will be exported.
+\item 
+\texttt{file}: the output file name
+\item 
+\texttt{format}: can be either count or rpkm for a MEDIPS SET or pdensity for a COUPLING SET.
+\item 
+\texttt{descr}: a track description for the wiggle file
+\end{itemize} 
+
+\subsection{Merge MEDIPS SETs}
+A MEDIPS SET represents the mapping results of a biological sample of interest, typically a biological or technical replicate.
+However, a biological or technical replicate might be sequenced several times or distributed over different lanes resulting in several bam files. 
+Instead of merging associated bam files previously to a MEDIPS analysis, the MEDIPS package allows to merge MEDIPS SETs generated from associated bam files.
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+Input.merged=MEDIPS.mergeSets(MSet1=hESCs_Input, MSet2=DE_Input, name="Input.hESCs.DE")
+@
+
+Please note, MEDIPS SETs to be merged are required to be previously generated based on the same reference genome, chromosome set, and window size.
+The \texttt{extend}, \texttt{shift} or \texttt{uniq} parameters can be different and are left blank in the resulting MEDIPS SET specification.
+The parameter \texttt{name} assigns a new file name to the merged MEDIPS SET. 
+Consequently, the merged MEDIPS SET does not have a concrete path and file association anymore and cannot be used as input for the \texttt{MEDIPS.addCNV} function.    
+
+\subsection{Correlation of MEDIPS SETs}
+Genome wide short read coverage profiles are expected to be similar for biological or technical replicates assuming a sufficient sequencing depth (compare section \texttt{Saturation Analysis}).
+The \texttt{MEDIPS.correlation} function comapares genome wide coverage profiles of provided MEDIPS SETs 
+and returns a correlation matrix containing pair-wise Pearson correlations.
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+cor.matrix=MEDIPS.correlation(MSets=c(hESCs_MeDIP, DE_MeDIP, hESCs_Input, DE_Input))
+@
+
+\subsection{Annotation of a (filtered) result table}
+Typically, it is of interest to annotate genomic windows with known genome characteristics like transcription start sites, exons, CpG islands etc.
+MEDIPS provides a basic function for adding additional annotation columns to the result table. 
+For this, an annotation object is required which contains the annotation ids, chromosome names, start and end positions. 
+As an example, MEDIPS allows to generate such an annotation object by accessing BioMart \citep{Durinck}:
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+anno.mart.gene = MEDIPS.getAnnotation(dataset=c("hsapiens_gene_ensembl"), annotation=c("GENE"), chr="chr22")
+@
+
+Annotation of the result matrix (either the full matrix or a subset of the matrix as selected by e.g. the \texttt{MEDIPS.selectSig} function)
+can now be performed as follows:
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+mr.edgeR.s = MEDIPS.setAnnotation(regions=mr.edgeR.s, annotation=anno.mart.gene)
+@
+
+An annotation is assigned to a genomic window, if their genomic coordinates overlap.
+
+\subsection{addCNV}
+In case there are INPUT SETs provided at both Input slots (i.e. \texttt{ISet1} and \texttt{ISet2}) of the \texttt{MEDIPS.meth} function, 
+copy number variation will be tested by applying the package \texttt{DNAcopy} to window-wise log-ratios calculated based on the the means per group. 
+However, by setting \texttt{CNV}=F copy number variation analysis will be disabled avoiding a computational demanding CNV analysis at previously determined (typically short) genome wide windows. 
+The function \texttt{MEDIPS.addCNV} allows to run the CNV analysis on two groups of INPUT SETs using another (typically increased) window size.
+Subsequently, the \texttt{MEDIPS.addCNV} function matches its CNV results to the given result table as previously generated by the \texttt{MEDIPS.meth} function.
+This allows for calculating CNVs for larger windows what might be more appropriate in case of low sequencing depth of Input-seq data.
+
+<<echo=TRUE, eval=F, keep.source=FALSE>>=
+mr.edgeR=MEDIPS.addCNV(cnv.Frame=10000, ISet1=hESCs_Input, ISet2=DE_Input, results=mr.edgeR)
+@
+
+
+\bibliographystyle{plainnat}
+\bibliography{MEDIPSTutorial}
+
+
+\end{document}

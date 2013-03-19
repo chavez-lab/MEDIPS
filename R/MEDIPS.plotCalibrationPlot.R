@@ -4,38 +4,71 @@
 ##Input:	MEDIPS SET and COUPLING SET
 ##Param:	MSet, CSet, plot_chr, rpkm, main, xrange, input
 ##Output:	Calibration Plot
-##Modified:	11/15/2011
-##Author:	Lukas Chavez
+##Modified:	03/18/2013
+##Author:	Lukas Chavez, Matthias Lienhard
 
-MEDIPS.plotCalibrationPlot <- function(MSet=NULL, CSet=NULL, plot_chr="chr1", rpkm=F, main="Calibration plot", xrange=T, input=FALSE){
+MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr="chr1", rpkm=T, main="Calibration plot", xrange=T){
 	
 	##Proof data accordance....
 	##########################
-	if(class(MSet)!="MEDIPSset") stop("Must specify a MEDIPSset object!")	
+	input=F
+	if(!(is.null(MSet) | class(MSet)=="MEDIPSset") ) stop("MSet must be a MEDIPSset object!")	
+	if(!(is.null(ISet) | class(ISet)=="MEDIPSset") ) stop("ISet must be a MEDIPSset object!")	
+	if(is.null(MSet) & is.null(ISet) ) stop("ISet and/or MSet must be specified")	
 	if(class(CSet)!="COUPLINGset") stop("Must specify a COUPLINGset object!")
-	if(window_size(MSet)!=window_size(CSet)) stop("MEDIPSset and COUPLINGset have different window sizes!")
-	if(length(chr_names(MSet))!=length(chr_names(CSet))) stop("MEDIPSset and COUPLINGset contain a different number of chromosomes!")
-	for(i in 1:length(chr_names(MSet))){
-		if(chr_names(MSet)[i]!=chr_names(CSet)[i]){stop("MEDIPSset and COUPLINGset contain different chomosomes!")}
-	}		
-	
-	signal=genome_count(MSet)
+	if(!is.null(MSet)){
+	  if(window_size(MSet)!=window_size(CSet)) stop("MSet and COUPLINGset have different window sizes!")
+	  if(length(chr_names(MSet))!=length(chr_names(CSet))) stop("MSet and COUPLINGset contain a different number of chromosomes!")
+	  for(i in 1:length(chr_names(MSet))){
+		if(chr_names(MSet)[i]!=chr_names(CSet)[i]){stop("MSset and COUPLINGset contain different chomosomes!")}
+	  }
+	}
+	if(!is.null(ISet)){
+	  if(window_size(ISet)!=window_size(CSet)) stop("ISet and COUPLINGset have different window sizes!")
+	  if(length(chr_names(ISet))!=length(chr_names(CSet))) stop("ISet and COUPLINGset contain a different number of chromosomes!")
+	  for(i in 1:length(chr_names(ISet))){
+		if(chr_names(ISet)[i]!=chr_names(CSet)[i]){stop("ISet and COUPLINGset contain different chomosomes!")}
+	  }
+	}
+	if(!is.null(MSet)){	
+		signal=genome_count(MSet)
+		chr_lengths = chr_lengths(MSet)
+		window_size = window_size(MSet)
+		number_regions = number_regions(MSet)
+		chromosomes=chr_names(MSet)
+	}else{
+		signal=genome_count(ISet)
+		chr_lengths = chr_lengths(ISet)
+		window_size = window_size(ISet)
+		number_regions = number_regions(ISet)
+		chromosomes=chr_names(ISet)
+	}
 	coupling=genome_CF(CSet)
 	seq_pattern=seq_pattern(CSet)
-	chr_lengths = chr_lengths(MSet)
-	window_size = window_size(MSet)
-	number_regions = number_regions(MSet)
-	chromosomes=chr_names(MSet)
-	
+		
 	##Calculate calibration curve
 	#####################################
-	ccObj = MEDIPS.calibrationCurve(MSet=MSet, CSet=CSet, input)
-	mean_signal = ccObj$mean_signal
-	coupling_level = ccObj$coupling_level
-	intercept = ccObj$intercept
-	slope = ccObj$slope
-	rm(ccObj)
-	gc()	
+	if (!is.null(MSet))
+	 	ccObj_MSet = MEDIPS.calibrationCurve(MSet=MSet, CSet=CSet, input=F)
+	if (!is.null(ISet))
+		ccObj_ISet = MEDIPS.calibrationCurve(MSet=ISet, CSet=CSet, input=T)
+	##Normalize
+	
+	#f=sum(ccObj_MSet$mean_signal)
+	#signal=signal/f
+	#ccObj_MSet$slope=ccObj_MSet$slope/f
+	#ccObj_ISet$slope=ccObj_ISet$slope/sum(ccObj_ISet$mean_signal)
+	#ccObj_MSet$intercept=ccObj_MSet$intercept/f
+	#ccObj_ISet$intercept=ccObj_ISet$intercept/sum(ccObj_ISet$mean_signal)
+	#ccObj_MSet$mean_signal=ccObj_MSet$mean_signal/f
+	#ccObj_ISet$mean_signal=ccObj_ISet$mean_signal/sum(ccObj_ISet$mean_signal)
+	
+	#mean_signal = ccObj$mean_signal
+	#coupling_level = ccObj$coupling_level
+	#intercept = ccObj$intercept
+	#slope = ccObj$slope
+	#rm(ccObj)
+	#gc()	
 		
 	##Check, if a subset of chromosomes has been selected
 	######################################################
@@ -54,46 +87,62 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, CSet=NULL, plot_chr="chr1", rp
 		cat(paste("Plotting calibration plot for", plot_chr, "...\n", sep=" "))
 	}
 	if(plot_chr=="all"){cat("Plotting calibration plot for all chromosomes. [It is recommended to redirect the output to a graphic device.]\n")}
-	
-	
-	##Calculate linear model
-	#########################
-	if(!input){
-		y_values=seq(0,max(coupling),1)
-		x_values_weighted=intercept+slope*y_values
+	if (!rpkm) {
+        	descSignal = "#reads/window"
+	}else{
+		descSignal = "rpkm"
+		if(!is.null(MSet)){
+		  f=10^9/(window_size * number_regions(MSet))
+		  signal=signal*f
+		  ccObj_MSet$slope=ccObj_MSet$slope*f
+		  ccObj_MSet$intercept=ccObj_MSet$intercept*f
+		  ccObj_MSet$mean_signal=ccObj_MSet$mean_signal*f
+		}else{
+		  signal=signal*10^9/(window_size * number_regions(ISet))
+		}
+		if(!is.null(ISet)){
+		  fI=10^9/(window_size * number_regions(ISet))
+		  ccObj_ISet$slope=ccObj_ISet$slope/fI
+		  ccObj_ISet$intercept=ccObj_ISet$intercept/fI
+		  ccObj_ISet$mean_signal=ccObj_ISet$mean_signal/fI
+		}
 	}
-		
+
+	
 	##Preparations for raw data plots
 	#################################
-	if(!rpkm){		
-		descSignal="#reads/window"
-		if(xrange){						
-			coupling=coupling[signal<=(max(mean_signal)*2)]
-			signal=signal[signal<=(max(mean_signal)*2)]			
-		}			
-	}
-	##Preparations for rpkm data plots
-	#################################
-	else{
-		descSignal="rpkm"
-		
-		if(!input){x_values_weighted = (x_values_weighted*10^9)/(window_size*number_regions(MSet))}
-		
-		signal = (signal*10^9)/(window_size*number_regions(MSet))
-		mean_signal = (mean_signal*10^9)/(window_size*number_regions(MSet))
-		
-		if(xrange){			
-			coupling = coupling[signal<=(max(mean_signal)*2)]
-			signal = signal[signal<=(max(mean_signal)*2)]					
-		}		
-	}			
-		
+	if(xrange){
+	  if(!is.null(MSet))
+	    range=c(0,max(ccObj_MSet$mean_signal)*5)
+	  else
+	    range=c(0,max(ccObj_ISet$mean_signal)*5)
+	}else
+	  range=c(0,max(signal))
+	  
 	##Plot
 	#######
-	plot(signal, coupling, pch=".", main=main, xlab=paste(descSignal, "", sep=""), ylab=paste(seq_pattern, " coupling factor", sep=""), col="lightblue")		
-	lines(mean_signal,  coupling_level, col="red")	
-	if(!input){lines(x_values_weighted, y_values, col="green")}
-	if(!input){legend(1, max(coupling), c("Genomic window", "Mean for coupling level", "Estimated linear fit"), fill=c("lightblue", "red", "green"))}
-	else{legend(1, max(coupling), c("Genomic window", "Mean for coupling level"), fill=c("lightblue", "red"))}
+	plot(coupling,signal, pch=".", main=main, ylab=descSignal,ylim=range, xlab=paste(seq_pattern, " coupling factor", sep=""), col="lightblue")		
+	for(i in 0:max(coupling)){
+	  t=table(signal[coupling==i])
+	  points(x=rep(i,length(t)), y=as.numeric(names(t)),lwd=log(t, 10), pch=4, col="lightblue")
+	}
+	if(!is.null(MSet))
+	  llab="MeDIP reads in genomic window"
+	else
+	  llab="Input reads in genomic window"
+	lcol="lightblue"
+	if(! is.null(MSet)){
+		lines(ccObj_MSet$coupling_level, ccObj_MSet$mean_signal, col="red")
+		abline(a=ccObj_MSet$intercept, b=ccObj_MSet$slope, col="green")
+		llab=c(llab,"MeDIP read density for coupling level","Estimated linear fit for MeDIP set")
+		lcol=c(lcol,"red", "green")
+	}
+	if(! is.null(ISet)){
+		lines(ccObj_ISet$coupling_level, ccObj_ISet$mean_signal, col="blue")
+		llab=c(llab,"Input read density for coupling level" )
+		lcol=c(lcol,"blue")
+	}
+
+	legend("topright", legend=llab, fill=lcol)
 	
 }

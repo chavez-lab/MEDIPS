@@ -19,21 +19,21 @@
 \tableofcontents
 
 \section{Introduction}
-MEDIPS was developed for analyzing data derived from methylated DNA immunoprecipitation (MeDIP) experiments \citep{Weber2005a} followed by sequencing (MeDIP-seq).
-However, MEDIPS provides several functionalities for the analysis of any other kind of quantitative sequencing data (e.g. ChIP-seq, MBD-seq, CMS-seq and others) including
+MEDIPS was developed for analyzing data derived from methylated DNA immunoprecipitation (MeDIP) experiments \citep{Weber2005a} followed by sequencing (MeDIP-seq) \citep{Down2008}.
+However, MEDIPS provides several functionalities for the analysis of other kinds of quantitative sequencing data (e.g. ChIP-seq, MBD-seq, CMS-seq, and others) including
 calculation of differential coverage between groups of samples as well as saturation and correlation analyses.
  
-In detail, MEDIPS adresses the following aspects in the context of IP-seq data analysis: 
+In detail, MEDIPS adresses the following aspects in the context of quantitative sequencing data analysis: 
 
 \begin{itemize}
 \item 
 estimating the reproducibility for obtaining full genome short read coverage profiles (saturation analysis), 
 \item 
-calculating genome wide sequencing signal densities at a user specified resolution (counts, rpkm),
+calculating genome wide signal densities at a user specified resolution (counts, rpkm),
 \item 
-calculating differentially coverage comparing two groups of IP-seq samples,
+calculating differential coverage comparing two groups of samples,
 \item 
-correcting for copy number variations putative present in the genomic background of the samples based on Input samples (if available),
+correcting for copy number variations present in the genomic background of the samples based on Input samples (if available),
 \item 
 export of raw and normalized data as Wiggle files for visualization in common genome browsers (e.g. the UCSC genome browser).
 \end{itemize} 
@@ -41,27 +41,25 @@ export of raw and normalized data as Wiggle files for visualization in common ge
 In addition, MEDIPS provides the following MeDIP/MBD-seq specific functionalities:
 \begin{itemize}
 \item 
-analyzing the coverage of genome wide DNA sequence patterns (e.g. CpGs) by the given reads,
+analyzing the coverage of genome wide DNA sequence patterns (e.g. CpGs) by the given short reads (or their mapping results, respectively),
 \item 
-calculating a CpG enrichment factor as a quality control for the MeDIP specific immunoprecipitation,
+calculating a CpG enrichment factor as a quality control for MeDIP/MBD specific immunoprecipitation,
 \item 
 calculating genome wide sequence pattern densities (e.g. CpGs) at a user specified resolution,
 \item 
-plotting of calibration plots as a data quality check and for a visual inspection of the dependency between local sequence pattern (e.g. CpG) densities and MeDIP signals,
+plotting of calibration plots as a data quality check and for a visual inspection of the dependency between local sequence pattern (e.g. CpG) densities and MeDIP/MBD signals,
 \item 
 normalization of MeDIP-seq data with respect to local sequence pattern (e.g. CpG) densities (relative methylation score),
 \end{itemize} 
 
-MEDIPS starts where the mapping tools stop (typically bam files) and can be used for any genome of interest, limited by the available genomes within the Bioconductor \texttt{BSgenome} package, only.
-In case a genome of interest is not available as a \texttt{BSgenome} package but the sequence of the genome is available, a custom \texttt{BSgenome} package can be generated, 
-please see the "How to forge a BSgenome data package" manual of the \texttt{BSgenome} package.
+MEDIPS starts where the mapping tools stop (typically bam files) and can be used for any genome of interest. In case a genome of interest is not available as a \texttt{BSgenome} package but the sequence of the genome is available, a custom \texttt{BSgenome} package can be generated, please see the "How to forge a BSgenome data package" manual of the \texttt{BSgenome} package.
 
 
 
 \section{Updates}
 Except of several bug fixes, there was no major update of the MEDIPS package since its release mid of 2010.
 With the release of version 1.10.0, there are several conceptual updates which result in major changes concerning data input, function and parameter definitions, and result formats.
-Hence, we apologize for any inconveniences, but we believe that these updates were necessary w.r.t. methodology, functionality, and performance (speed and memory usage).
+Hence, we apologize for any inconveniences, but we believe that these updates were necessary with respect to methodology, functionality, and performance (speed and memory usage).
 
 Major updates include:    
 
@@ -75,8 +73,8 @@ Normalization and differential coverage is then calculated window-wise.
 Genome wide differential coverage between two groups of samples can be calculated by modelling a negative binomial distribution.
 For this, MEDIPS applies the sophisticated Bioconductor package edgeR \citep{Robinson2010} and its functions for normalization, estimation of overdispersion, and statistical testing.
 Therefore, MEDIPS not only allows to calculate differentially methylated regions from MeDIP-seq data 
-but also allows to process any other kind of quantitative sequencing data (e.g. ChIP-seq) in order to calculate genome wide differential coverage. 
-Differential coverage can then be interpreted as either differential methylation (MeDIP/MBD or ChIP for histone modifications), differential hydroxymethylation (CMS), 
+but also allows to process many other kinds of quantitative sequencing data (e.g. ChIP-seq) in order to calculate genome wide differential coverage. 
+Differential coverage can then be interpreted as either differential methylation (MeDIP/MBD or ChIP for histone modifications), differential hydroxymethylation (anti-CMS), 
 differential binding (ChIP for transcription factors) or simply as sample specific enrichments (e.g. ChIP vs. Input).  
 \item 
 MEDIPS allows for estimating copy number variations (CNVs) when Input data for both conditions (Input control and Input treatment) is provided. 
@@ -573,22 +571,22 @@ Normalization is based on the dependency between short read coverage and CpG den
 This dependency has been originally demonstrated by Down et al. \citep{Down2008} and can be visualized as a calibration plot.
 
 <<echo=TRUE, eval=F, keep.source=FALSE>>=
-MEDIPS.plotCalibrationPlot(CSet=CS, input=F, main="Calibration Plot", MSet=hESCs_MeDIP[[1]], plot_chr="chr22",  rpkm=T,  xrange=T)
+MEDIPS.plotCalibrationPlot(CSet=CS, main="Calibration Plot", MSet=hESCs_MeDIP[[1]], plot_chr="chr22",  rpkm=TRUE,  xrange=TRUE)
 @
 
 \begin{itemize}
 \item
 \texttt{CS}: the COUPLING SET
 \item 
-\texttt{input}: specifies whether the given data set at \texttt{MSet} is MeDIP or Input data. In case of Input data, no linear regression will be calculated.
+\texttt{ISet}: an INPUT SET (i.e. a MEDIPS SET created from Input sequening data). No linear regression will be calculated for the Input Set.
 \item 
 \texttt{main}: the main of the figure
 \item 
-\texttt{MSet}: the MEDIPS SET (or INPUT SET, respectively)
+\texttt{MSet}: the MEDIPS SET object
 \item 
 \texttt{plot\_chr}: the chromsome for which the calibration plot will be generated
 \item 
-\texttt{rpkm}: specifies, if the MeDIP data range will be plotted in count or rpkm format
+\texttt{rpkm}: specifies, if the MeDIP data range will be plotted in count or rpkm format. It is necessary to set rpkm=T, if both, a MSet and an ISet are given and plotted at the same time.
 \item 
 \texttt{xrange}: if set to TRUE, only the lower data range of the calibration plot will be visualized
 \end{itemize} 
@@ -668,6 +666,33 @@ This allows for calculating CNVs for larger windows what might be more appropria
 <<echo=TRUE, eval=F, keep.source=FALSE>>=
 mr.edgeR=MEDIPS.addCNV(cnv.Frame=10000, ISet1=hESCs_Input, ISet2=DE_Input, results=mr.edgeR)
 @
+
+
+\subsection{Comments on the experimental design and Input data}
+There are two common questions for conducting and analyzing MeDIP or any other kind of enrichment/immunoprecipitation (IP) based sequencing data: 
+first, it is of interest to identify enriched regions in an IP sample in order to reveal e.g. methylated regions, the occurrence of histone modifications, or to localize transcription factor binding sites. 
+Second, it is of interest to identify differential short read coverage comparing two conditions (here treatment vs. control) in order to identify genomics regions that show e.g. differential methylation or differential transcription factor binding. 
+An intutive approach for identifying differential coverage is to first calculate condition-wise enrichments (or 'peaks') followed by mutual subtraction of these 'set of peaks'. 
+However, this approach has several limitations (not discussed here) and the MEDIPS package follows an alternative strategy directly comparing the groups of IP samples against each other.
+
+For the identification of sample-wise local enrichments, any peak finder appropriate for the analyzed data type may be applied (differences of peak finding tools are not discussed here). 
+In addition, it is recommended to include Input data for estimating a background coverage distribution and local coverage bias. 
+Most peak finders are capable of incorporating Input data. For MeDIP data, a CpG density bias has been observed that is not considered by standard peak callers. 
+MEDIPS allows to incorporate the CpG density into the short-read counts resulting in relative methylation values (rms), and we have shown an improved correlation of rms values to bisulfite sequencing data compared to counts or rpkm values \citep{Chavez2010}. 
+However, the resulting range of rms values depends on several unknown factors including the total abundance of methyalted cytosines in the sample or on high outlier signals which might be present even in Input data.
+In case reference bisulfite data of selected genomic regions is available (low to high methylation), it is possible to associate the range of MeDIP-seq derived rms values to the bisulfite derived data range (i.e. percentage of methylated cytosines per window) \citep{Grimm2013}. 
+However, without reference data, it remains an insufficiently solved problem to estimate thresholds for low, intermediate, and high metylation, or to caluculate significant local enrichments based on CpG density corrected data in order to identify methylated regions (or 'peaks') over background.
+
+For the identification of differential coverage, it can be assumed that any experiment independent bias, like local CpG density, affects the short read coverage in both samples (control and treatment) the same way. 
+Therefore, no normalization of CpG density or other experiment independent factors must be performed when differential coverage between two groups of IP samples is calculated. 
+As a consequence, Input samples for the control and for the treatment samples might not be necessary. 
+However, there can exist differences in the genomic backgrounds of the control and treatment samples caused by e.g. copy number variations in healthy versus cancer cells or by different efficiencies of amplification. 
+In such cases, it is necessary to explicitly create independent Input samples for the control and for the treatment samples in order to reveal local background differences that can influence the identification of differential coverage comparing the according IP samples. 
+MEDIPS (1.10.0 or higher) can process an arbitrary number of Input samples per condition, if available, and allows for considering copy number variations observed in the Input data when differential coverage is calculated for the IP data. 
+
+In summary, the need for Input data depends on two conditions: the experimental design ("Am I interested in IP enrichments over Input or do I want to calculate differential coverage between two groups of IP samples?") and the biological samples to be analyzed ("Do my samples have the same genomic background?") 
+
+
 
 
 \bibliographystyle{plainnat}

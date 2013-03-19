@@ -7,11 +7,14 @@ Creates the calibration plot.
 Visualizes the dependency between MeDIP-seq signals and CpG densities together with the calcibration curve and the results of the linear modelling.
 }
 \usage{
-MEDIPS.plotCalibrationPlot(MSet=NULL, CSet=NULL, plot_chr="chr1", rpkm=F, main="Calibration plot", xrange=T, input=FALSE)
+MEDIPS.plotCalibrationPlot(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr="chr1", rpkm=T, main="Calibration plot", xrange=T)
 }
 \arguments{
   \item{MSet}{
 a MEDIPS SET object
+}
+\item{ISet}{
+an INPUT SET (i.e. a MEDIPS SET created from Input sequening data)
 }
 \item{CSet}{
 an according COUPLING SET object
@@ -21,7 +24,7 @@ default="chr1". It is recommended to call a graphics device (e.g. png("calibrati
 }
 \item{rpkm}{
 can be either TRUE or FALSE. If set to TRUE, the methylation signals will be transformed into rpkm before plotted.
-The coupling values remain untouched.
+The coupling values remain untouched. It is necessary to set rpkm=T, if both, a MSet and an ISet are given and plotted at the same time.
 }
 \item{main}{
 The title of the calibration plot.
@@ -30,24 +33,19 @@ The title of the calibration plot.
 The signal range of the calibration curve typically falls into a low signal range. 
 By setting the xrange parameter to TRUE, the calibration plot will visualize the low signal range only. 
 }
-\item{input}{
-Set input to TRUE when you are processing Input data (without MeDIP enrichment). 
-The function will not calculate the linear model which represents the dependency between MeDIP signals and CpG densities.
-}
 
 }
 \value{
 The calibration plot will be visualized.
 }
 \author{
-Lukas Chavez
+Lukas Chavez, Matthias Lienhard
 }
 \examples{
 library(MEDIPSData)
 data(hESCs_MeDIP)
 data(CS)
 
-MEDIPS.plotCalibrationPlot(CSet=CS, input=FALSE, main="Calibration Plot", MSet=hESCs_MeDIP[[1]], plot_chr="chr22",  rpkm=TRUE,  xrange=TRUE)
+MEDIPS.plotCalibrationPlot(CSet=CS, main="Calibration Plot", MSet=hESCs_MeDIP[[1]], plot_chr="chr22",  rpkm=TRUE,  xrange=TRUE)
 
 }
-

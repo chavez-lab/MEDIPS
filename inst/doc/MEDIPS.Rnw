@@ -690,7 +690,7 @@ However, there can exist differences in the genomic backgrounds of the control a
 In such cases, it is necessary to explicitly create independent Input samples for the control and for the treatment samples in order to reveal local background differences that can influence the identification of differential coverage comparing the according IP samples. 
 MEDIPS (1.10.0 or higher) can process an arbitrary number of Input samples per condition, if available, and allows for considering copy number variations observed in the Input data when differential coverage is calculated for the IP data. 
 
-In summary, the need for Input data depends on two conditions: the experimental design ("Am I interested in IP enrichments over Input or do I want to calculate differential coverage between two groups of IP samples?") and the biological samples to be analyzed ("Do my samples have the same genomic background?") 
+In summary, the need for Input data depends on two conditions: the experimental design ("Am I interested in IP enrichments over Input or do I want to calculate differential coverage between two groups of IP samples?") and the biological samples to be analyzed ("Do my samples have the same genomic background?").
 
 
 

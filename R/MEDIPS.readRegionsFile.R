@@ -16,6 +16,9 @@ getGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=F
 	bam=( ext==".bam" | ext ==".BAM" )
 	bamindex=bam & file.exists(paste(path,"/", fileName,".bai", sep=""))
 	if (bam){
+
+		scanFlag = scanBamFlag(isUnmappedQuery = F)
+		
 		if(bamindex & (!is.null(chr.select) | !is.null(ROI)) ){#read bam with index			
 			if(!is.null(ROI)){
 			    cat("Reading bam alignment",fileName,"\n considering ROIs using bam index\n")	
@@ -33,10 +36,10 @@ getGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=F
 			    cat("Reading bam alignment",fileName,"\n considering ",chr.select," using bam index\n")		
                             sel=GRanges(chr.select,IRanges(1, 536870912))
 			}
-			scanParam=ScanBamParam(what = c("rname", "pos", "strand", "qwidth"),which=sel)			
+			scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth"), which=sel)			
 		}else {#read bam without index
 			cat("Reading bam alignment",fileName,"\n")		
-			scanParam=ScanBamParam(what = c("rname", "pos", "strand", "qwidth"))
+			scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth"))
 		}
 		regions = scanBam(file=paste(path, fileName, sep="/"), param=scanParam)
 		regions = do.call(rbind,lapply(regions, as.data.frame, stringsAsFactors=F))

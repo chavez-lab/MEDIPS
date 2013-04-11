@@ -542,7 +542,8 @@ MEDIPS provides the functionality to select subsets of the result matrix returne
 As an example, we consider the set of merged windows (here \texttt{mr.edgeR.s.loss.m}, see previous section) as a set of ROIs:
 
 <<echo=TRUE, eval=F, keep.source=FALSE>>=
-rois=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.loss.m, columns="counts", summarize=F)
+columns=names(mr.edgeR)[grep("counts",names(mr.edgeR))]
+rois=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.loss.m, columns=columns, summarize=F)
 @
 
 The function \texttt{MEDIPS.selectROIs} will select all genomic windows in the original result table (here \texttt{mr.edgeR})
@@ -550,13 +551,12 @@ which are included in the boundaries defined by the genomic coordinates of the g
 The number of returned windows depends on the window size and on the length of the provided ROIs.
 Please note, only selected columns will be returned as determined by the \texttt{columns} parameter.
 In this example, the function selects all columns which contain count values.
-In addition, it is possible to specify concrete column names and to provide several identifiers of interest like e.g. c("counts", "rpkm").
 
 As an alternative for extracting all windows included in the genomic ranges of the given ROIs,
 it is possible to calculate mean values over the individual windows for each ROI, a behaviour that is controlled by the parameter \texttt{summarize}.
 
 <<echo=TRUE, eval=F, keep.source=FALSE>>=
-rois.s=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.m, columns="counts", summarize=T)
+rois.s=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.m, columns=columns, summarize=T)
 @
 
 For each ROI and for each specified column, there will be one mean value returned.

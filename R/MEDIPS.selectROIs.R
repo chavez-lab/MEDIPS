@@ -44,7 +44,7 @@ MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=F){
 		gc()
    		mean.rois.data=apply(IRanges::as.data.frame(values(results.GRange)),2,function(x){
        			l=split(x[ind],g)
-       			return(unlist(lapply(l,mean)))
+       			return(unlist(lapply(l, mean, na.rm=T)))
    		})		
 		##Convert Grange rois result object to base
 		g = unique(g)

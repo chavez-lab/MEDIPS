@@ -226,7 +226,7 @@ getMObjectFromWIG <- function(fileName, path, chr.select=NULL,BSgenome){
 							chr_lengths=chr_lengths,
 							genome_count=genome_count, 
 							extend=0,
-							shift=0, 
+							shifted=0, 
 							window_size=window_size,
 							uniq=NA))
 }

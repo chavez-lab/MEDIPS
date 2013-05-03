@@ -15,7 +15,7 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 	if(diff.method=="edgeR"){		
 			
 		##Extract non-zero MeDIP count windows
-		cat(paste("Extracting count windows with at least",minRowSum," reads...\n", sep=" "))
+		cat(paste("Extracting count windows with at least", minRowSum, "reads...\n", sep=" "))
 		filter= rowSums(values)>=minRowSum
 		##Extract non-zero coupling factor rows
 
@@ -26,7 +26,8 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 
 		cat(paste("Execute edgeR for count data of", sum(filter), "windows...\n", sep=" "))
 		cat("(Neglecting parameter 'type')\n")
-							
+
+		cat("Creating a DGEList object...\n")						
 		edRObj.group=c(rep(1, nMSets1), rep(2, nMSets2))
 		edRObj.length=c(n.r.M1, n.r.M2)
 		d <- edgeR::DGEList(counts = values[filter,], group = edRObj.group, lib.size=edRObj.length)
@@ -34,17 +35,23 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 		#rm(values)
 		#gc()
 
+		cat("Apply trimmed mean of M-values (TMM) for library sizes normalization...\n")	
 		d=edgeR::calcNormFactors(d)
 
 		if(nMSets1!=1 | nMSets2!=1){
+			cat("Estimating common dispersion...\n")			
 			d=edgeR::estimateCommonDisp(d)
+			cat("Estimating tagwise dispersion...\n")	
+			d=edgeR::estimateTagwiseDisp(d)
+			cat("Calculating differential coverage...\n")
 			de.com=edgeR::exactTest(d,pair=c("2","1"))
 		}
 		else{
-			cat("There is no replication, setting dispersion to 0.01.\n")
+			cat("There is no replication, setting dispersion to bcv^2 where bcv=0.01.\n")
 			cat("Please consider http://www.bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf section 2.9.\n")
-			
-			de.com = suppressWarnings(edgeR::exactTest(d, dispersion=0.01, pair=c("2","1")))
+			bcv = 0.01
+			cat("Calculating differential coverage...\n")
+			de.com = suppressWarnings(edgeR::exactTest(d, dispersion=bcv^2, pair=c("2","1")))
 		}
 		
 		##Adjusting p.values for multiple testing

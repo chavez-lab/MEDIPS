@@ -7,7 +7,7 @@ Calculates pairwise Pearson correlations between provided MEDIPS SETs
 The function calculates genome wide Pearson correlations between all pairs of provided MEDIPS SETs.
 }
 \usage{
-MEDIPS.correlation(MSets=NULL, plot = T)
+MEDIPS.correlation(MSets=NULL, plot = T, method="pearson")
 }
 \arguments{
   \item{MSets}{
@@ -15,6 +15,9 @@ a concatenated set of MEDIPS SETs
 }
   \item{plot}{
 if specified, the correlation will be depicted as a scatter plot
+}
+\item{method}{
+default: pearson; alternatives: kendall, spearman
 }
 }
 \value{

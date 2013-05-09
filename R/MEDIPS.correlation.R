@@ -7,7 +7,7 @@
 ##Modified:	04/20/2012
 ##Author:	Lukas Chavez
 
-MEDIPS.correlation <- function(MSets=NULL, plot=T){
+MEDIPS.correlation <- function(MSets=NULL, plot=T, method="pearson"){
 	
 	n=length(MSets)
 
@@ -30,7 +30,7 @@ MEDIPS.correlation <- function(MSets=NULL, plot=T){
 			}
 			if(window_size(MSets[[i]])!=window_size(MSets[[j]])){stop("MEDIPSset objects MSet1 and MSet2 have different window sizes!")}		
 		
-			c=cor(MSets[[i]]@genome_count, MSets[[j]]@genome_count)
+			c=cor(MSets[[i]]@genome_count, MSets[[j]]@genome_count, method=method)
 			cor.matrix[i,j]=c
 			if(plot){
 				png(paste("Scatter_", sample_name(MSets[[i]]), "_vs_", sample_name(MSets[[j]]), ".png", sep=""))

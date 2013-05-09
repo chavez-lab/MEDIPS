@@ -148,9 +148,9 @@ MEDIPS.meth = function(
 	##Extract data for selected chromosome
 	#######################################
 	if(!is.null(chr)){
-		fi=base[,1]==chr
+		fi=base[,1]%in%chr
 		
-		cat(paste("Extracting data for", chr, "...\n", sep=" "))
+		cat("Extracting data for", chr, "...\n", sep=" ")
 		if(length(fi)==0){stop("Stated chromosome does not exist in the COUPLING SET.")}
 		if(!is.null(counts.medip)){
 			counts.medip = counts.medip[fi,]
@@ -163,7 +163,7 @@ MEDIPS.meth = function(
 			rpkm.input = rpkm.input[fi,]
 		}
 		base = base[fi,]
-		cat(paste(nrow(base), "windows on", chr, "\n",sep=" "))		
+		cat(nrow(base), "windows on", chr, "\n",sep=" ")		
 	}
 	
 	##Set colnames and transform to data.frames

@@ -58,12 +58,14 @@ MEDIPS.getAnnotation<-function(host="www.biomart.org",dataset=c("hsapiens_gene_e
 	
 	biomart <- biomaRt::useMart(mart, dataset,host=host)
 	Annotation=NULL
-	f=""
 	if(! is.null(chr)) {
 		f="chromosome_name"
 		for(i in 1:length(chr))#remove the chr prefix
 			if(substr(chr[i],1,3)=="chr")
 				chr[i]=substr(chr[i],4,nchar(chr[i]))
+	}else{
+		f=""
+		chr=""
 	} 
 
 	if("GENE"%in%annotation){

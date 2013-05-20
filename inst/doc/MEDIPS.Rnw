@@ -527,7 +527,7 @@ mr.edgeR.s.gain = mr.edgeR.s[which(mr.edgeR.s[,grep("logFC", colnames(mr.edgeR.s
 Subsequently, the function \texttt{MEDIPS.mergeFrames} can be applied to merge all adjacent significant regions into one region which will be finally regarded as one event of differential coverage: 
 
 <<echo=TRUE, eval=T, keep.source=FALSE, results=hide>>=
-mr.edgeR.s.gain.m = MEDIPS.mergeFrames(frames=mr.edgeR.s.gain, distance=0)
+mr.edgeR.s.gain.m = MEDIPS.mergeFrames(frames=mr.edgeR.s.gain, distance=1)
 @
 
 Here we interpret the selected and merged genomic regions as differentially methylated regions (DMRs) showing gain of methylation during differentiation.

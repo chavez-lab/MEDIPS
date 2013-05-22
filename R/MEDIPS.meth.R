@@ -275,6 +275,7 @@ MEDIPS.meth = function(
 		}
 		else{stop("Selected method for calculating differential coverage not supported")}
 		
+		cat("Please note, log2 ratios are reported as log2(MSet1/MSet2).\n")
 		diff.results = diff.results.list$diff.results
 		diff.index = diff.results.list$diff.index
 				

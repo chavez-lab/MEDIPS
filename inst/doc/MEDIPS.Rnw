@@ -420,7 +420,7 @@ However, in this case study we also want to calculate differential methylation b
 differential coverage will be calculated.
 
 <<echo=TRUE, eval=T, results=hide, keep.source=FALSE>>=
-mr.edgeR = MEDIPS.meth(MSet1=hESCs_MeDIP, MSet2=DE_MeDIP, CSet=CS, ISet1=hESCs_Input, ISet2=DE_Input, p.adj="bonferroni", diff.method="edgeR", prob.method="poisson", MeDIP=T, CNV=F, type="rpkm", minRowSum=1)
+mr.edgeR = MEDIPS.meth(MSet1=DE_MeDIP, MSet2=hESCs_MeDIP, CSet=CS, ISet1=DE_Input, ISet2=hESCs_Input, p.adj="bonferroni", diff.method="edgeR", prob.method="poisson", MeDIP=T, CNV=F, type="rpkm", minRowSum=1)
 @
 
 Parameters that can be specified are:
@@ -444,8 +444,8 @@ The \texttt{ttest} method will be calculated only in case there are at least thr
 The \texttt{ttest} method can be applied to the rpkm or CpG density normalized rms values as specified by the \texttt{type} parameter (see below).
 The \texttt{ttest} method adds four vectors to the result table: \texttt{score.log2.ratio}, \texttt{score.p.value}, \texttt{score.adj.p.value}, and \texttt{score} where \texttt{score = (-log10(p.value)*10)*log(ratio)}.
 As an alternative, \texttt{edgeR} can be applied for testing differential coverage in genome wide windows even for less than 3 replicates per group.
-However, in case there is only one MEDIPS SET per group, the dispersion will be set to 0.01 (please consider section "What to do if you have no replicates" of edgeR's User's Guide).
-The weighted trimmed mean of M-values (TMM) method is used to calculate scale factors between libraries and the library whose upper quartile is closest to the mean upper quartile is used.
+However, in case there is only one MEDIPS SET per group, the dispersion will be set to $bcv^2$ where $bcv=0.01$ (please consider section "What to do if you have no replicates" of edgeR's User's Guide).
+The weighted trimmed mean of M-values (TMM) method is used to calculate scale factors between libraries.
 The \texttt{edgeR} method will be applied to the counts of the genome wide windows.
 The \texttt{edgeR} method adds four vectors to the result table which are edgeR's exactTest standard output: \texttt{edgeR.logFC}, \texttt{edgeR.logCPM}, \texttt{edgeR.p.value}, and \texttt{edgeR.adj.p.value}.
 \item 
@@ -517,11 +517,11 @@ In case the parameter \texttt{CNV} is set to TRUE, MEDIPS will consider only gen
 After having identified and extracted genomic windows showing significant differential coverage between conditions, 
 it remains of interest to merge neighboring significant windows into a larger continuous region.
 Please note, the result object \texttt{mr.edgeR.s} returned by the \texttt{MEDIPS.selectSig} contains genomic regions that show differential coverage into both directions, 
-i.e. either a higher coverage in the group of samples in MSet1 (here hESCs) over the group of samples in MSet2 (here DE) or vice versa.
-In order to isolate the subset of genomic regions that show e.g. higher coverage in MSet2 over MSet1, we use the following R syntax:
+i.e. either a higher coverage in the group of samples in MSet1 (here DE) over the group of samples in MSet2 (here hESCs) or vice versa.
+In order to isolate the subset of genomic regions that show e.g. higher coverage in MSet1 over MSet2, we use the following R syntax:
 
 <<echo=TRUE, eval=T, keep.source=FALSE>>=
-mr.edgeR.s.gain = mr.edgeR.s[which(mr.edgeR.s[,grep("logFC", colnames(mr.edgeR.s))]<0),]
+mr.edgeR.s.gain = mr.edgeR.s[which(mr.edgeR.s[,grep("logFC", colnames(mr.edgeR.s))]>0),]
 @
 
 Subsequently, the function \texttt{MEDIPS.mergeFrames} can be applied to merge all adjacent significant regions into one region which will be finally regarded as one event of differential coverage: 
@@ -539,11 +539,11 @@ Please note, merged windows are represented only by their genomic coordinates an
 
 \subsection{Regions of interest}
 MEDIPS provides the functionality to select subsets of the result matrix returned by the \texttt{MEDIPS.meth} function according to any given set of regions of interest (ROIs).
-As an example, we consider the set of merged windows (here \texttt{mr.edgeR.s.loss.m}, see previous section) as a set of ROIs:
+As an example, we consider the set of merged windows (here \texttt{mr.edgeR.s.gain.m}, see previous section) as a set of ROIs:
 
 <<echo=TRUE, eval=F, keep.source=FALSE>>=
 columns=names(mr.edgeR)[grep("counts",names(mr.edgeR))]
-rois=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.loss.m, columns=columns, summarize=F)
+rois=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.gain.m, columns=columns, summarize=NULL)
 @
 
 The function \texttt{MEDIPS.selectROIs} will select all genomic windows in the original result table (here \texttt{mr.edgeR})
@@ -556,7 +556,7 @@ As an alternative for extracting all windows included in the genomic ranges of t
 it is possible to calculate mean values over the individual windows for each ROI, a behaviour that is controlled by the parameter \texttt{summarize}.
 
 <<echo=TRUE, eval=F, keep.source=FALSE>>=
-rois.s=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.m, columns=columns, summarize=T)
+rois.s=MEDIPS.selectROIs(results=mr.edgeR, rois=mr.edgeR.s.m, columns=columns, summarize="avg")
 @
 
 For each ROI and for each specified column, there will be one mean value returned.

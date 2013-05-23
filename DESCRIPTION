@@ -1,7 +1,7 @@
 Package: MEDIPS
 Type: Package
 Title: (MeD)IP-seq data analysis
-Version: 1.11.10
+Version: 1.11.11
 Date: 2013-05-17
 Author: Lukas Chavez, Matthias Lienhard, Joern Dietrich
 Maintainer: Lukas Chavez <lchavez@liai.org>

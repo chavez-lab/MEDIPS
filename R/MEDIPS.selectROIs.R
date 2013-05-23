@@ -62,7 +62,10 @@ MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=NULL
 		#find ROIs in data
 		m=IRanges::as.matrix(findOverlaps(rois.Grange, results.GRange))
 		#find col containing the pvalue
-		pval_idx=grep("p.value", names(results))[1]
+		pval_idx=grep("p.value", names(results)[c(1,2,3,column.ids)])[1]
+	        if(is.na(pval_idx)){
+			stop("Error: no p.value column selected while summarize is \"minP\"")
+        	}
 		#group windows by roi
                 roi_list=split(results[m[,2],c(1,2,3,column.ids)],m[,1])
 		#set the name of the rois

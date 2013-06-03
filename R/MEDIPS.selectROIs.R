@@ -71,7 +71,8 @@ MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=NULL
 		#set the name of the rois
 		names(roi_list)=rois.Grange$ids[as.numeric(names(roi_list))]
 		#find rois containing windows with pvalue
-		nonEmpty=lapply(X=roi_list, FUN=nrow)>0
+		nonEmpty=lapply(X=roi_list, FUN=nrow)>0 &
+		unlist(lapply(X=roi_list,FUN=function(x){return(any(!is.na(x[,pval_idx])))}))
 		#for each ROI: select most significant window 
        		minPvalROI=unsplit(lapply(X=roi_list[nonEmpty], FUN=function(x){return(as.vector(x[which.min(x[,pval_idx]),]))} ),1:sum(nonEmpty))
 		#set name of rois in result table

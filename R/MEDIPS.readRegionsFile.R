@@ -122,9 +122,9 @@ getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, 
 	cat("scanBamFlag: isPaired = T, isProperPair=TRUE , hasUnmappedMate=FALSE, ",
 		"isUnmappedQuery = F, isFirstMateRead = T, isSecondMateRead = F\n", sep="")
 
-        if(extend!=0 | shift!=0){
-		cat("In paired end mode no region adjusting allowed\n")
-	}
+        #if(extend!=0 | shift!=0){
+	#	cat("In paired end mode no region adjusting allowed\n")
+	#}
 	
 	##Get mean distance and sd
 	cat("Mean insertion size: ", mean(abs(regions$isize)), " nt\n", sep="")
@@ -133,22 +133,27 @@ getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, 
 	cat("Min insertion size: ", min(abs(regions$isize)), " nt\n", sep="")
         
 	prev=substr(fileName,1,nchar(fileName)-4)
-	png(filename=paste(paste(path, prev, sep="/"), "IS.distribution.png", sep="."))
-	hist(abs(regions$isize), breaks=100)
-	dev.off()
+	#png(filename=paste(paste(path, prev, sep="/"), "IS.distribution.png", sep="."))
+	#hist(abs(regions$isize), breaks=100)
+	#dev.off()
 
 	##Filter for F3 reads having a mate in reasonable distance
-	t.l=quantile(abs(regions$isize), probs=c(0.99))[[1]]
-	cat("Removing reads with insertion size>: ", t.l, "\n", sep="")	
-	regions = regions[regions$isize<=t.l,]		
-	cat("Number of remaining regions: ", nrow(regions), "\n", sep="")
-		
+	#t.l=max(quantile(abs(regions$isize), probs=c(0.99))[[1]],mean(abs(regions$isize))+5*sd(abs(regions$isize)))
+	#if(t.l<max(abs(regions$isize))){
+	#	cat("Removing reads with insertion size>: ", t.l, "\n", sep="")	
+	#	regions = regions[regions$isize<=t.l,]		
+	#	cat("Number of remaining regions: ", nrow(regions), "\n", sep="")
+	#}	
 	#Extend the regions according to their insertion size and create data frame
-	cat("Extend first mate according to insert size + 35bp into sequencing direction.\n", sep="")
-	mateRL = 35  #read length of the 2nd mate
+	#cat("Extend first mate according to insert size + 35bp into sequencing direction.\n", sep="")
+	#mateRL = 35  #read length of the 2nd mate
 	regions = data.frame(chr=as.character(as.vector(regions$rname)), start=as.numeric(as.vector(regions$pos)), stop=as.numeric(as.vector(regions$pos)+as.vector(regions$qwidth)-1), strand=as.character(as.vector(regions$strand)), isize=as.numeric(as.vector(regions$isize)), stringsAsFactors=F)
-	regions[which(regions$strand=="+"), 3] = regions[which(regions$strand=="+"), 3] + regions[which(regions$strand=="+"), 5] + mateRL
-	regions[which(regions$strand=="-"), 2] = regions[which(regions$strand=="-"), 2] + regions[which(regions$strand=="-"), 5] - mateRL
+	
+	plus=regions$strand=="+"
+	regions[plus, "stop"] = regions[plus, "stop"] + regions[plus, "isize"] + extend
+	regions[!plus, "start"] = regions[!plus, "start"] + regions[!plus,"isize" ] - extend
+	regions[, "stop"]=regions[, "stop"]+shift
+	regions[, "start"]=regions[, "start"]+shift
 
         cat("Creating GRange Object...\n")
         regions_GRange = GRanges(seqnames=regions$chr, ranges=IRanges(start=regions$start, end=regions$stop), strand=regions$strand)

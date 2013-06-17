@@ -1,8 +1,8 @@
 Package: MEDIPS
 Type: Package
 Title: (MeD)IP-seq data analysis
-Version: 1.11.13
-Date: 2013-06-03
+Version: 1.11.14
+Date: 2013-06-17
 Author: Lukas Chavez, Matthias Lienhard, Joern Dietrich
 Maintainer: Lukas Chavez <lchavez@liai.org>
 Description: MEDIPS was developed for analyzing data derived from methylated DNA immunoprecipitation (MeDIP) experiments followed by sequencing (MeDIP-seq). 

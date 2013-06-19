@@ -204,18 +204,14 @@ getMObjectFromWIG <- function(fileName, path, chr.select=NULL,BSgenome){
 	genome_count=values(wiggle)[,1]
 	window_size=width(wiggle)[1]
 	#check that all chromosomes are completely covered
-	if(length(genome_count) == sum(ceiling(chr_lengths/window_size))){
-	  pos=0
-	  for(chr_idx in 1:length(chr.select)){
-	    chr_in_wig=unique(as.vector(seqnames(wiggle[(pos+1):(pos+ceiling(chr_lengths[chr_idx]/window_size))] )))
-	    if(length(chr_in_wig)!=1 | chr_in_wig != chr.select[chr_idx]){
-		cat("ERROR: wiggle file must completely cover all selected chromosomes\nNon-conformance found in ",chr.select[chr_idx],"\n")
-	  	return(NULL)
-	    }
-	    pos=pos+ceiling(chr_lengths[chr_idx]/window_size)
-	  }
-	}else{
-	  stop("ERROR: wiggle file must completely cover all selected chromosomes\n")
+        wiggle_chrL=runLength(seqnames(wiggle))
+	wiggle_chrN=as.character(runValue(seqnames(wiggle)))
+	m=match(chr.select,wiggle_chrN)
+	if(any(is.na(m))){
+	    stop("ERROR: wiggle file must cover all selected chromosomes\nNot covered chr: ",paste(chr.select[is.na(m)],sep=", "),"\n")
+	}
+	if(any(wiggle_chrL[m] != ceiling(chr_lengths/window_size))){
+	    stop("ERROR: wiggle file must completly cover all selected chromosomes\nNot covered chr: ",paste(wiggle_chrL[m] != ceiling(chr_lengths/window_size),sep=", "),"\n")
 	}
 	
 	#check that values are integer

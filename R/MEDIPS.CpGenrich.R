@@ -40,7 +40,7 @@ MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=TR
 	total=length(chromosomes)
 	cat("Calculating CpG density for given regions...\n")  
 	seq=matrix(unlist(IRanges::lapply(RangedData(GRange.Reads),function(x){		
-		i=which(sort(chromosomes)%in%names(x) )
+		i=which(mixedsort(chromosomes)%in%names(x) )
 		ranges(x)<-restrict(ranges(x),end=chr_lengths[which(chromosomes %in% names(x))])
 		y=DNAStringSet(getSeq(dataset, names=space(x), start=start(x), end=end(x), as.character=TRUE))
 		c(sum(as.numeric(vcountPattern("CG",y))),sum(as.numeric(vcountPattern("C",y))),sum(as.numeric(vcountPattern("G",y))),sum(as.numeric(width(y))),length(y))

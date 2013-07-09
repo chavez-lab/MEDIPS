@@ -21,7 +21,7 @@ MEDIPS.createSet <- function(file=NULL, extend=0, shift=0, window_size=300, BSge
 		
 	# Chromosomes should be sorted
 	if(! is.null(chr.select))
-		chr.select=sort(unique(chr.select))
+		chr.select=mixedsort(unique(chr.select))
 	if(!fileName%in%dir(path)){stop(paste("File", fileName, " not found in", path, sep =" "))}
 		ext=strsplit(fileName, ".", fixed=T)[[1]]	
 	if (ext[length(ext)] %in% c("gz","zip","bz2"))

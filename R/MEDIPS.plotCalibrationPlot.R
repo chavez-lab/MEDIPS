@@ -7,39 +7,65 @@
 ##Modified:	03/18/2013
 ##Author:	Lukas Chavez, Matthias Lienhard
 
-MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr="chr1", rpkm=T, main="Calibration plot", xrange=T){
+MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr="all", rpkm=T, main="Calibration plot", xrange=T){
 	
 	##Proof data accordance....
 	##########################
 	input=F
-	if(!(is.null(MSet) | class(MSet)=="MEDIPSset") ) stop("MSet must be a MEDIPSset object!")	
-	if(!(is.null(ISet) | class(ISet)=="MEDIPSset") ) stop("ISet must be a MEDIPSset object!")	
+
+	if(!(is.null(MSet)) & (class(MSet)!="MEDIPSset" & class(MSet)!="MEDIPSroiSet")) stop("MSet must be a MEDIPSset or MEDIPSroiSet object!")	
+	if(!(is.null(ISet)) & (class(ISet)!="MEDIPSset" & class(ISet)!="MEDIPSroiSet")) stop("ISet must be a MEDIPSset or MEDIPSroiSet object!")	
 	if(is.null(MSet) & is.null(ISet) ) stop("ISet and/or MSet must be specified")	
+
+	#print("Checking CSet")
 	if(class(CSet)!="COUPLINGset") stop("Must specify a COUPLINGset object!")
-	if(!is.null(MSet)){
+	
+	#print("Checking MSet")
+	if(!is.null(MSet) & class(MSet)=="MEDIPSset"){
 	  if(window_size(MSet)!=window_size(CSet)) stop("MSet and COUPLINGset have different window sizes!")
 	  if(length(chr_names(MSet))!=length(chr_names(CSet))) stop("MSet and COUPLINGset contain a different number of chromosomes!")
 	  for(i in 1:length(chr_names(MSet))){
 		if(chr_names(MSet)[i]!=chr_names(CSet)[i]){stop("MSset and COUPLINGset contain different chomosomes!")}
 	  }
 	}
-	if(!is.null(ISet)){
+	
+	if(!is.null(MSet) & class(MSet)=="MEDIPSroiSet"){
+		if( length(genome_count(MSet)) != length(genome_CF(CSet)) ){stop("MSet and COUPLINGset have different number of regions of interest!")}
+		if( length(chr_names(MSet)) != length(chr_names(CSet)) ){stop("MSet and COUPLINGset contain a different number of chromosomes!")}
+          	for(i in 1:length(chr_names(MSet))){
+                	if(chr_names(MSet)[i]!=chr_names(CSet)[i]){stop("MSset and COUPLINGset contain different chomosomes!")}
+          	}
+	}
+
+	#print("Checking ISet")
+	if(!is.null(ISet) & class(ISet)=="MEDIPSset"){
 	  if(window_size(ISet)!=window_size(CSet)) stop("ISet and COUPLINGset have different window sizes!")
 	  if(length(chr_names(ISet))!=length(chr_names(CSet))) stop("ISet and COUPLINGset contain a different number of chromosomes!")
 	  for(i in 1:length(chr_names(ISet))){
 		if(chr_names(ISet)[i]!=chr_names(CSet)[i]){stop("ISet and COUPLINGset contain different chomosomes!")}
 	  }
 	}
-	if(!is.null(MSet)){	
+
+	if(!is.null(ISet) & class(ISet)=="MEDIPSroiSet"){
+		if( length(genome_count(ISet)) != length(genome_CF(CSet)) ){stop("MSet and COUPLINGset have different number of regions of interest!")}
+                if( length(chr_names(ISet)) != length(chr_names(CSet)) ){stop("MSet and COUPLINGset contain a different number of chromosomes!")}
+                for(i in 1:length(chr_names(ISet))){
+                        if(chr_names(ISet)[i]!=chr_names(CSet)[i]){stop("MSset and COUPLINGset contain different chomosomes!")}
+               	}
+	}
+
+	if(!is.null(MSet)){
 		signal=genome_count(MSet)
 		chr_lengths = chr_lengths(MSet)
-		window_size = window_size(MSet)
+		if(class(MSet)=="MEDIPSset"){window_size = window_size(MSet)}
+		if(class(MSet)=="MEDIPSroiSet"){window_size = width(rois(MSet))}
 		number_regions = number_regions(MSet)
 		chromosomes=chr_names(MSet)
 	}else{
 		signal=genome_count(ISet)
 		chr_lengths = chr_lengths(ISet)
-		window_size = window_size(ISet)
+		if(class(ISet)=="MEDIPSset"){window_size = window_size(ISet)}
+                if(class(ISet)=="MEDIPSroiSet"){window_size = width(rois(ISet))}
 		number_regions = number_regions(ISet)
 		chromosomes=chr_names(ISet)
 	}
@@ -52,27 +78,11 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 	 	ccObj_MSet = MEDIPS.calibrationCurve(MSet=MSet, CSet=CSet, input=F)
 	if (!is.null(ISet))
 		ccObj_ISet = MEDIPS.calibrationCurve(MSet=ISet, CSet=CSet, input=T)
-	##Normalize
-	
-	#f=sum(ccObj_MSet$mean_signal)
-	#signal=signal/f
-	#ccObj_MSet$slope=ccObj_MSet$slope/f
-	#ccObj_ISet$slope=ccObj_ISet$slope/sum(ccObj_ISet$mean_signal)
-	#ccObj_MSet$intercept=ccObj_MSet$intercept/f
-	#ccObj_ISet$intercept=ccObj_ISet$intercept/sum(ccObj_ISet$mean_signal)
-	#ccObj_MSet$mean_signal=ccObj_MSet$mean_signal/f
-	#ccObj_ISet$mean_signal=ccObj_ISet$mean_signal/sum(ccObj_ISet$mean_signal)
-	
-	#mean_signal = ccObj$mean_signal
-	#coupling_level = ccObj$coupling_level
-	#intercept = ccObj$intercept
-	#slope = ccObj$slope
-	#rm(ccObj)
-	#gc()	
+
 		
 	##Check, if a subset of chromosomes has been selected
 	######################################################
-	if(plot_chr!="all"){
+	if(plot_chr!="all" & (class(MSet)=="MEDIPSset" | class(ISet)=="MEDIPSset")){
 		cat(paste("Extracting data for",plot_chr, "...\n", sep=" "))
 		
 		##Calculate genomic coordinates
@@ -86,29 +96,31 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 		coupling = coupling[genome_chr==plot_chr]
 		cat(paste("Plotting calibration plot for", plot_chr, "...\n", sep=" "))
 	}
-	if(plot_chr=="all"){cat("Plotting calibration plot for all chromosomes. [It is recommended to redirect the output to a graphic device.]\n")}
+
+	if(plot_chr!="all" & (class(MSet)=="MEDIPSroiSet" | class(ISet)=="MEDIPSroiSet")){stop("Selecting chromosomes nor supported for regions of interest.")}
+
+	if(plot_chr=="all"){cat("Plotting calibration plot for all chromosomes. It is recommended to redirect the output to a graphic device.\n")}
+
 	if (!rpkm) {
         	descSignal = "#reads/window"
 	}else{
 		descSignal = "rpkm"
 		if(!is.null(MSet)){
+		  if(class(MSet)=="MEDIPSroiSet"){stop("Transformation to rpkm not supported for regions of interest.")}
 		  f=10^9/(window_size * number_regions(MSet))
 		  signal=signal*f
 		  ccObj_MSet$slope=ccObj_MSet$slope*f
 		  ccObj_MSet$intercept=ccObj_MSet$intercept*f
 		  ccObj_MSet$mean_signal=ccObj_MSet$mean_signal*f
-		}else{
-		  signal=signal*10^9/(window_size * number_regions(ISet))
 		}
 		if(!is.null(ISet)){
-		  fI=10^9/(window_size * number_regions(ISet))
-		  ccObj_ISet$slope=ccObj_ISet$slope/fI
-		  ccObj_ISet$intercept=ccObj_ISet$intercept/fI
+		  if(class(ISet)=="MEDIPSroiSet"){stop("Transformation to rpkm not supported for regions of interest.")}
+		  signal=signal*10^9/(window_size * number_regions(ISet))
+         	  fI=10^9/(window_size * number_regions(ISet))
 		  ccObj_ISet$mean_signal=ccObj_ISet$mean_signal/fI
 		}
 	}
 
-	
 	##Preparations for raw data plots
 	#################################
 	if(xrange){

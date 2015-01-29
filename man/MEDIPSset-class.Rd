@@ -22,7 +22,6 @@
 \alias{getTypes}
 \alias{getGRange}
 \alias{adjustReads}
-\alias{MEDIPS.transform}
 \alias{MEDIPS.Bed2Granges}
 \alias{MEDIPS.Bam2GRanges}
 
@@ -39,13 +38,10 @@
 \alias{uniq}
 \alias{window_size}
 
-\alias{MEDIPS.distributeReads}
 \alias{MEDIPS.GenomicCoordinates}
 \alias{MEDIPS.calibrationCurve}
 \alias{MEDIPS.cnv}
 \alias{MEDIPS.getPositions}
-\alias{MEDIPS.negBin}
-\alias{MEDIPS.pois}
 \alias{MEDIPS.rms}
 
 \alias{matNnotNA}
@@ -96,15 +92,12 @@ According slots will be filled during the workflow.
     \item{shifted}{\code{signature(object = "MEDIPSset")}: extracts the number of bases by which the regions are shifted }
     \item{uniq}{\code{signature(object = "MEDIPSset")}: extracts the specified value for the uniq parameter }
         
-    \item{MEDIPS.distributeReads}{\code{signature(object = "MEDIPSset")}: internal function for distributing the reads over the genome vector }
     \item{MEDIPS.GenomicCoordinates}{\code{signature(object = "MEDIPSset")}: internal function for calculating coordinates for the genomic bins }    
     \item{MEDIPS.readRegionsFile}{\code{signature(object = "MEDIPSset")}: internal function for reading short read information }
     \item{MEDIPS.calibrationCurve}{\code{signature(object = "MEDIPSset")}: internal function for calculating the calibration curve}
     \item{MEDIPS.cnv}{\code{signature(object = "MEDIPSset")}: internal function for calculating CNVs in case two groups of INPUT SETs have been provided to the MEDIPS.meth function}
     \item{MEDIPS.diffMeth}{\code{signature(object = "MEDIPSset")}: internal function for calculating differential coverage in case two groups of MEDIPS SETs have been provided to the MEDIPS.meth function}
     \item{MEDIPS.getPositions}{\code{signature(object = "MEDIPSset")}: internal function for receiving genomic coordinates of a given sequence pattern (e.g. CG)}
-    \item{MEDIPS.negBin}{\code{signature(object = "MEDIPSset")}: internal function for calculating methylatiopn probabilities with respect to CpG density dependent negative binomial distributions}
-    \item{MEDIPS.pois}{\code{signature(object = "MEDIPSset")}: internal function for calculating methylatiopn probabilities with respect to CpG density dependent poisson distributions}
     \item{MEDIPS.rms}{\code{signature(object = "MEDIPSset")}: internal function for calculating relative methylation scores}
 
     \item{matNnotNA}{\code{signature(object = "MEDIPSset")}: internal function for vectorized calculation of the t.test }

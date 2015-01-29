@@ -55,7 +55,9 @@ MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=NULL
 		g = unique(m[,1])
 		base = data.frame(chr=as.character(as.vector(seqnames(rois.Grange[g]))), start=start(rois.Grange[g]), end=end(rois.Grange[g]), stringsAsFactors=F)
 		ids = rois.Grange$ids[g]
-		avgROI=cbind(base, mean.rois.data)
+		if(dim(base[1,])[1]==1){
+			avgROI=data.frame(c(base, mean.rois.data))
+		}else{avgROI=cbind(base, mean.rois.data)}
 		avgROI$ROI=ids		
 		return(avgROI)
 	}else if(summarize =="minP"){

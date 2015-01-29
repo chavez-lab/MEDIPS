@@ -1,0 +1,13 @@
+citHeader("Please cite the following paper:")
+
+citEntry(
+   entry="article",
+   title = "MEDIPS: genome-wide differential coverage analysis of sequencing data derived from DNA enrichment experiments",
+   author = "Matthias Lienhard and Christina Grimm and Markus Morkel and Ralf Herwig and Lukas Chavez",
+   journal = "Bioinformatics",
+   volume = "30",
+   pages = "284-286",
+   year = "2014",
+   textVersion = "Lienhard M, Grimm C, Morkel M, Herwig R, Chavez L (2014). MEDIPS: genome-wide differential coverage analysis of sequencing data derived from DNA enrichment experiments. Bioinformatics, 30(2):284-6"
+)
+

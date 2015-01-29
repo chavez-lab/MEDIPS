@@ -8,14 +8,12 @@
 ##Modified:	11/10/2011
 ##Author:	Lukas Chavez, Joern Dietrich
 getGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=FALSE, ROI=NULL){
-	if(!is.null(ROI) & !is.null(chr.select)){
-		cat("Selecting ROIs from ",chr.select,"\n")		
-		ROI=ROI[ROI[,1] %in% chr.select,]
-	}
+
 	ext=substr(fileName,nchar(fileName)-3,nchar(fileName))
 	bam=( ext==".bam" | ext ==".BAM" )
 	bamindex=bam & file.exists(paste(path,"/", fileName,".bai", sep=""))
-	if (bam){
+
+	if(bam){
 
 		scanFlag = scanBamFlag(isUnmappedQuery = F)
 		
@@ -30,7 +28,6 @@ getGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=F
 				ROI[,2]=ROI[,2]-shift
 				ROI[,3]=ROI[,3]-shift
 			    }
-                            #sel=GRanges(ROI[,1],IRanges(start=ROI[,2], end=ROI[,3]))
 			    sel=GRanges(chr.select,IRanges(1, 536870912))
 			}else{
 			    cat("Reading bam alignment",fileName,"\n considering ",chr.select," using bam index\n")		
@@ -52,10 +49,10 @@ getGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=F
 	}
 
 	if(!is.null(chr.select)& !bamindex){
-		cat("Selecting",chr.select,"\n")
+		cat("Selecting ", chr.select, "\n")
 		regions = regions[regions[,1] %in% as.vector(chr.select),]
 	}		
-	cat("Total number of imported short reads: ", nrow(regions), "\n", sep="")		
+	cat("Total number of imported short reads: ", nrow(regions), "\n", sep="")
 	
 	regions = adjustReads(regions, extend, shift)
 	
@@ -70,11 +67,10 @@ getGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=F
 	return(regions_GRange)
 }
 
-getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=FALSE, ROI=NULL){
-	if(!is.null(ROI) & !is.null(chr.select)){
-		cat("Selecting ROIs from ",chr.select,"\n")		
-		ROI=ROI[ROI[,1] %in% chr.select,]
-	}
+getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, uniq=FALSE, ROI=NULL, bwa=FALSE){
+
+	if(bwa){cat("Warning: processing of bwa alignment files for paired-end sequencing data is still under development.\n")}
+
         ext=substr(fileName,nchar(fileName)-3,nchar(fileName))
         bam=( ext==".bam" | ext ==".BAM" )
         bamindex=bam & file.exists(paste(path,"/", fileName,".bai", sep=""))
@@ -82,7 +78,6 @@ getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, 
 		scanFlag = scanBamFlag(isPaired=T, isProperPair=TRUE ,
 			hasUnmappedMate=FALSE, isUnmappedQuery = F, isFirstMateRead = T,
 			isSecondMateRead = F)
-		#scanFlag = scanBamFlag(isPaired=T, isUnmappedQuery = F, isFirstMateRead = T, isSecondMateRead = F)
                 if(bamindex & (!is.null(chr.select) |! is.null(ROI))){#read bam with index
 			if(!is.null(ROI)){
 			    cat("Reading bam alignment",fileName,"\n considering ROIs using bam index\n")	
@@ -99,17 +94,18 @@ getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, 
 			    cat("Reading bam alignment",fileName,"\n considering ",chr.select," using bam index\n")		
                             sel=GRanges(chr.select,IRanges(1, 536870912))
 			}
-			scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth", "isize"), which=sel)
+			if(bwa){scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth", "isize", "mpos"), which=sel)}
+			else{scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth", "isize"), which=sel)}
                 }else {#read bam without index
                         cat("Reading bam alignment",fileName,"\n")
-			scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth", "isize"))
+			if(bwa){scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth", "isize", "mpos"))}
+			else{scanParam=ScanBamParam(flag=scanFlag, what = c("rname", "pos", "strand", "qwidth", "isize"))}
                 }
                 regions = scanBam(file=paste(path, fileName, sep="/"), param=scanParam)
 		regions = do.call(rbind,lapply(regions, as.data.frame, stringsAsFactors=F))		
 
         }else{#read from bed file
-                cat("BED files in paired end mode not allowed.\n")
-		return(NULL)
+                stop("BED files in paired end mode not supported.\n")
         }
 
 	if(!is.null(chr.select)& !bamindex){
@@ -117,41 +113,33 @@ getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, 
                 regions = regions[regions[,1] %in% as.vector(chr.select),]
         }
 
-	cat("Total number of imported first mate reads: ", nrow(regions), "\n", sep="")
-	#cat("scanBamFlag: isPaired = T, isUnmappedQuery = F, isFirstMateRead = T, isSecondMateRead = F\n", sep="")
+	cat("Total number of imported first mate reads in properly mapped pairs: ", nrow(regions), "\n", sep="")
 	cat("scanBamFlag: isPaired = T, isProperPair=TRUE , hasUnmappedMate=FALSE, ",
 		"isUnmappedQuery = F, isFirstMateRead = T, isSecondMateRead = F\n", sep="")
 
-        #if(extend!=0 | shift!=0){
-	#	cat("In paired end mode no region adjusting allowed\n")
-	#}
-	
 	##Get mean distance and sd
 	cat("Mean insertion size: ", mean(abs(regions$isize)), " nt\n", sep="")
 	cat("SD of the insertion size: ", sd(abs(regions$isize)), " nt\n", sep="")
 	cat("Max insertion size: ", max(abs(regions$isize)), " nt\n", sep="")
 	cat("Min insertion size: ", min(abs(regions$isize)), " nt\n", sep="")
         
-	prev=substr(fileName,1,nchar(fileName)-4)
-	#png(filename=paste(paste(path, prev, sep="/"), "IS.distribution.png", sep="."))
-	#hist(abs(regions$isize), breaks=100)
-	#dev.off()
+	if(bwa){#contributed by Victor Renault, 1/27/2015
+		cat("Paired-end alignment (BAM) files generated by bwa are processed in a different way compared to BAM files generated by bowtie, because in the bwa output the first mate can be either the 'left' or the 'right' mate regardless of their alignment to the plus or the minus strand.\n")
+		qwidth = regions[, "qwidth"]
+		regions = data.frame(chr = as.character(as.vector(regions$rname)), start = as.numeric(as.vector(regions$pos)), stop = as.numeric(as.vector(regions$mpos)), strand = as.character(as.vector(regions$strand)), isize = as.numeric(as.vector(regions$isize)), stringsAsFactors = F)
+		regionsToRev=regions$start > regions$stop
+		tmp = regions[regionsToRev,]$start
+		regions[regionsToRev,]$start = regions[regionsToRev,]$stop
+		regions[regionsToRev,]$stop = tmp
+		regions[, "stop"] = regions[, "stop"] + qwidth - 1 + extend
+	}
+	else{
+		regions = data.frame(chr=as.character(as.vector(regions$rname)), start=as.numeric(as.vector(regions$pos)), stop=as.numeric(as.vector(regions$pos)+as.vector(regions$qwidth)-1), strand=as.character(as.vector(regions$strand)), isize=as.numeric(as.vector(regions$isize)), stringsAsFactors=F)
+		plus=regions$strand=="+"
+		regions[plus, "stop"] = regions[plus, "stop"] + regions[plus, "isize"] + extend
+		regions[!plus, "start"] = regions[!plus, "start"] + regions[!plus,"isize" ] - extend
+	}
 
-	##Filter for F3 reads having a mate in reasonable distance
-	#t.l=max(quantile(abs(regions$isize), probs=c(0.99))[[1]],mean(abs(regions$isize))+5*sd(abs(regions$isize)))
-	#if(t.l<max(abs(regions$isize))){
-	#	cat("Removing reads with insertion size>: ", t.l, "\n", sep="")	
-	#	regions = regions[regions$isize<=t.l,]		
-	#	cat("Number of remaining regions: ", nrow(regions), "\n", sep="")
-	#}	
-	#Extend the regions according to their insertion size and create data frame
-	#cat("Extend first mate according to insert size + 35bp into sequencing direction.\n", sep="")
-	#mateRL = 35  #read length of the 2nd mate
-	regions = data.frame(chr=as.character(as.vector(regions$rname)), start=as.numeric(as.vector(regions$pos)), stop=as.numeric(as.vector(regions$pos)+as.vector(regions$qwidth)-1), strand=as.character(as.vector(regions$strand)), isize=as.numeric(as.vector(regions$isize)), stringsAsFactors=F)
-	
-	plus=regions$strand=="+"
-	regions[plus, "stop"] = regions[plus, "stop"] + regions[plus, "isize"] + extend
-	regions[!plus, "start"] = regions[!plus, "start"] + regions[!plus,"isize" ] - extend
 	regions[, "stop"]=regions[, "stop"]+shift
 	regions[, "start"]=regions[, "start"]+shift
 
@@ -262,26 +250,6 @@ setTypes<-function(types){
 }
 
 #####################################
-##get GRange function
-#####################################
-##Input:	file
-##Param:	filename, path, extend
-##Output:	GRange object
-##Modified:	12/10/2011
-##Author:	Joern Dietrich
-#getGRange<-function(fileName, path, extend, shift, chr.select){
-#	 if(extend!=0 & shift!=0){
-#                stop("One of the parameters extend or shift has to be 0!")
-#	}
-#	cat(paste("Reading file ", fileName, " in ", path, "...\n", sep=""))
-#	GRange.Reads = suppressWarnings(try(MEDIPS.Bam2GRanges(fileName, path, extend, shift, chr.select),silent=T))
-#	if(typeof(GRange.Reads)!="S4"){
-#		GRange.Reads = suppressWarnings(try(MEDIPS.Bed2Granges(fileName, path, extend, shift, chr.select),silent=T))	
-#	}
-#	return(GRange.Reads)
-#}
-
-#####################################
 ##adjust GRange function
 #####################################
 ##Input:	dataframe
@@ -292,7 +260,6 @@ setTypes<-function(types){
 adjustReads<-function(regions, extend, shift){
 	if(extend!=0){		
 		cat("Extending reads...\n")
-		####???????extend.c = abs(regions.l - extend)
 		extend.c = pmax(0,extend-regions$stop+regions$start)
 		regions$stop[regions$strand=="+"]=regions$stop[regions$strand=="+"]+extend.c[regions$strand=="+"]
 		regions$start[regions$strand=="-"]=regions$start[regions$strand=="-"]-extend.c[regions$strand=="-"]	

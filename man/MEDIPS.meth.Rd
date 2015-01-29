@@ -8,14 +8,14 @@ Funtion summarizes coverage profiles for given MEDIPS SETs and allows to calcula
 \description{
 The function summarizes coverage profiles (counts, rpkm) for given MEDIPS SETs at the slots MSet1, MSet2, ISet1, and ISet1.
 In case the parameter MeDIP is set to TRUE and a COUPLING SET was provided at the slot CS, 
-the function will calculate normalized methylation profiles (rms, prob) for the MEDIPS SETs at the slots MSet1 and MSet2.
+the function will calculate CpG density normalized methylation profiles (relative methylation score, rms) for the MEDIPS SETs at the slots MSet1 and MSet2.
 In case two groups of MEDIPS SETs have been provided at MSet1 and MSet2, the function will calculate differential coverage.
 In case two groups of MEDIPS SETs have been provided at ISet1 and ISet2 and the parameter CNV was set to TRUE, 
 the function will calculate copy number variation.
-Because the function allows for processing a variable number of provided MEDIPS SETs, the returned matrix is of variable length.
+The function allows for processing a variable number of provided MEDIPS SETs and therefore, the returned matrix is of variable length.
 }
 \usage{
-MEDIPS.meth(MSet1 = NULL, MSet2 = NULL, CSet = NULL, ISet1 = NULL, ISet2 = NULL, chr = NULL, p.adj="bonferroni", diff.method="ttest", prob.method="poisson", CNV=FALSE, MeDIP=TRUE, type="rpkm",minRowSum=1)
+MEDIPS.meth(MSet1 = NULL, MSet2 = NULL, CSet = NULL, ISet1 = NULL, ISet2 = NULL, chr = NULL, p.adj="bonferroni", diff.method="edgeR", CNV=FALSE, MeDIP=FALSE, type="rpkm",minRowSum=10, quantile=FALSE)
 }
 \arguments{
   \item{MSet1}{
@@ -43,12 +43,6 @@ Therefore, the following methods are available: holm, hochberg, hommel, bonferro
   \item{diff.method}{
 method for calculating differential coverage. Available methods: ttest (default) and edgeR.
 }
-  \item{prob.method}{
-Provided that the parameter MeDIP is set to TRUE, MEDIPS will calculate CpG density dependent probability values in order to estimate the methylation status of genome wide windows. 
-For this, MEDIPS calculates a series of CpG coupling factor dependent probability distributions. The methylation status of each window will be estimated by its according distribution.
-There are two probability distributions available: poisson (default) and negBinomial.  
-Please note that we consider this method to be poorly conceived and under further development.
-}
   \item{CNV}{
 In case there are INPUT SETs provided at both Input slots (i.e. ISet1 and ISet2), 
 copy number variation will be tested by applying the package DNAcopy to the window-wise log-ratios calculated based on the the means per group. 
@@ -63,7 +57,10 @@ In case diff.method has been set to ttest, this parameter specifies, if differen
 This parameter is ignored in case the edgeR method is selected as the underlying model requires count data.
 }
   \item{minRowSum}{
-threshold for the sum of counts in a window for the staistical test (default=1). 
+threshold for the sum of counts in a window for the staistical test (default=10). 
+}
+   \item{quantile}{
+This parameter enables quantile normalization on the count matrix prior to calculating differential coverage (default=FALSE).
 }
 }
 
@@ -75,17 +72,14 @@ threshold for the sum of counts in a window for the staistical test (default=1).
 \item{*counts}{a variable number of columns (according to the number of provided MEDIPS SETs) containing for each set the number of (extended/shifted) reads that overlap with the window.}
 \item{*rpkm}{a variable number of columns (according to the number of provided MEDIPS SETs) containing for each set the rpkm value of the window.}
 \item{*rms}{optional (if MeDIP=TRUE): a variable number of columns (according to the number of provided MEDIPS SETs) containing for each set the rms value of the window.}
-\item{*prob}{optional (if MeDIP=TRUE): a variable number of columns (according to the number of provided MEDIPS SETs) containing for each set the probability of methylation [0:1] of the window.}
 \item{*counts}{optional (if INPUT SETs given): a variable number of columns (according to the number of provided INPUT SETs) containing for each set the number of (extended/shifted) reads that overlap with the window.}
 \item{*rpkm}{optional (if INPUT SETs given): a variable number of columns (according to the number of provided INPUT SETs) containing for each set the rpkm value of the window.}
 \item{MSets1.counts.mean}{optional (if more than one MEDIPS SET given): the mean count over all MEDIPS SETs at MSet1.}
 \item{MSets1.rpkm.mean}{optional (if more than one MEDIPS SET given): the mean rpkm value over all MEDIPS SETs at MSet1.}
 \item{MSets1.rms.mean}{optional (if more than one MEDIPS SET given): the mean rms value over all MEDIPS SETs at MSet1.}
-\item{MSets1.prob.mean}{optional (if more than one MEDIPS SET given): the mean probability value over all MEDIPS SETs at MSet1.}
 \item{MSets2.counts.mean}{optional (if more than one MEDIPS SET given): the mean count over all MEDIPS SETs at MSet2.}
 \item{MSets2.rpkm.mean}{optional (if more than one MEDIPS SET given): the mean rpkm value over all MEDIPS SETs at MSet2.}
 \item{MSets2.rms.mean}{optional (if more than one MEDIPS SET given): the mean rms value over all MEDIPS SETs at MSet2.}
-\item{MSets2.prob.mean}{optional (if more than one MEDIPS SET given): the mean probability value over all MEDIPS SETs at MSet2.}
 \item{ISets1.counts.mean}{optional (if more than one INPUT SET given): the mean count over all INPUT SETs at ISet1.}
 \item{ISets1.rpkm.mean}{optional (if more than one INPUT SET given): the mean rpkm value over all INPUT SETs at ISet1.}
 \item{ISets2.counts.mean}{optional (if more than one INPUT SET given): the mean count over all INPUT SETs at ISet2.}

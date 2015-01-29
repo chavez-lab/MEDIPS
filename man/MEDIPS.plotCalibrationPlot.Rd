@@ -7,7 +7,7 @@ Creates the calibration plot.
 Visualizes the dependency between MeDIP-seq signals and CpG densities together with the calcibration curve and the results of the linear modelling.
 }
 \usage{
-MEDIPS.plotCalibrationPlot(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr="chr1", rpkm=T, main="Calibration plot", xrange=T)
+MEDIPS.plotCalibrationPlot(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr="all", rpkm=T, main="Calibration plot", xrange=T)
 }
 \arguments{
   \item{MSet}{
@@ -20,7 +20,7 @@ an INPUT SET (i.e. a MEDIPS SET created from Input sequening data)
 an according COUPLING SET object
 }
 \item{plot_chr}{
-default="chr1". It is recommended to call a graphics device (e.g. png("calibrationPlot.png")) before calling the plot command, because R might not be able to plot the full amount of data in reasonable time.
+default="all". It is recommended to call a graphics device (e.g. png("calibrationPlot.png")) before calling the plot command, because R might not be able to plot the full amount of data in reasonable time.
 }
 \item{rpkm}{
 can be either TRUE or FALSE. If set to TRUE, the methylation signals will be transformed into rpkm before plotted.

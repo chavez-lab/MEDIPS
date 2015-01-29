@@ -6,7 +6,7 @@
 ##Param:	pattern, refObj
 ##Output:	COUPLING SET
 ##Requires:	gtools, BSgenome
-##Modified:	08/31/2012
+##Modified:	01/09/2015
 ##Author:	Lukas Chavez
 
 MEDIPS.couplingVector <- function(pattern="CG", refObj=NULL){	
@@ -16,12 +16,15 @@ MEDIPS.couplingVector <- function(pattern="CG", refObj=NULL){
 	if(class(refObj)!="MEDIPSset" & class(refObj)!="MEDIPSroiSet")	{
 		stop("You must provide an MEDIPSset or MEDIPSroiSet as reference object\n")
 	}
+
 	chr_lengths=chr_lengths(refObj)
 	chromosomes = chr_names(refObj)
 	BSgenome = genome_name(refObj)
+
 	if(is.list(refObj)){
 		refObj=refObj[[1]]
 	}
+
 	## Get the genomic positions of the sequence pattern
 	cat("Get genomic sequence pattern positions...\n")
 	GRanges.pattern = MEDIPS.getPositions(BSgenome, pattern, chromosomes)
@@ -32,8 +35,7 @@ MEDIPS.couplingVector <- function(pattern="CG", refObj=NULL){
 		no_chr_windows = ceiling(chr_lengths/window_size)
 		supersize_chr = cumsum(no_chr_windows)	
 		Granges.genomeVec = MEDIPS.GenomicCoordinates(supersize_chr, no_chr_windows, chromosomes, chr_lengths, window_size)	
-	}else{	
-	#class(refObj)=="MEDIPSroiSet"
+	}else{	#this means: class(refObj)=="MEDIPSroiSet"
 		Granges.genomeVec = rois(refObj)
 		window_size=-1
 	}

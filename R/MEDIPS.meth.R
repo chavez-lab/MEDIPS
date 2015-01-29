@@ -4,11 +4,11 @@
 ##calculates CNV scores between groups of INPUT SETs (if provided)
 ##########################################################################
 ##Input:	Groups of MEDIPS and INPUT SETs
-##Param:	MSet1, MSet2, CSet, ISet1, ISet2, chr, p.adj, diff.method, prob.method, type
+##Param:	MSet1, MSet2, CSet, ISet1, ISet2, chr, p.adj, diff.method, type, minRowSum, quantile
 ##Output:	Result table
 ##Requires:	DNAcopy
-##Modified:	11/22/2011
-##Author:	Lukas Chavez, Joern Dietrich
+##Modified:	01/09/2014
+##Author:	Lukas Chavez
 
 MEDIPS.meth = function(
 		MSet1 = NULL, 
@@ -18,12 +18,12 @@ MEDIPS.meth = function(
 		ISet2 = NULL, 
 		chr = NULL, 
 		p.adj="bonferroni", 
-		diff.method="ttest", 
-		prob.method="poisson",
+		diff.method="edgeR", 
 		CNV=FALSE,
-		MeDIP=TRUE,
+		MeDIP=FALSE,
 		type="rpkm",
-		minRowSum=1
+		minRowSum=10,
+		quantile=FALSE
 		)
 {
 	nMSets1 = length(MSet1)	
@@ -97,7 +97,6 @@ MEDIPS.meth = function(
 	counts.medip = NULL
 	rpkm.medip = NULL
 	rms = NULL	
-	prob = NULL	
 	counts.input = NULL
 	rpkm.input = NULL
 	
@@ -106,13 +105,10 @@ MEDIPS.meth = function(
 		for(i in 1:nMSets1){
 			cat(paste("Preprocessing MEDIPS SET ", i, " in MSet1...\n", sep=""))
 			counts.medip = cbind(counts.medip, MSet1=genome_count(MSet1[[i]]))
-			rpkm.medip = cbind(rpkm.medip, ((genome_count(MSet1[[i]])*10^9)/(window_size*number_regions(MSet1[[i]]))))
+			rpkm.medip = cbind(rpkm.medip, round(((genome_count(MSet1[[i]])*10^9)/(window_size*number_regions(MSet1[[i]]))), digits=2))
 			if(MeDIP){
 				ccObj = MEDIPS.calibrationCurve(MSet=MSet1[[i]], CSet=CSet, input=F)
 				rms = cbind(rms, MEDIPS.rms(MSet1[[i]], CSet, ccObj=ccObj))
-				if(prob.method=="poisson"){prob = cbind(prob, MEDIPS.pois(MSet1[[i]], CSet, ccObj=ccObj))}
-				else if(prob.method=="negBinomial"){prob = cbind(prob, MEDIPS.negBin(MSet1[[i]], CSet, ccObj=ccObj))}		
-				else{stop(paste("Method ", prob.method, " not supported.",  sep=""))}
 			}		
 		}
 	}	
@@ -120,13 +116,10 @@ MEDIPS.meth = function(
 		 for(i in 1:nMSets2){
 			cat(paste("Preprocessing MEDIPS SET ", i, " in MSet2...\n", sep=""))
 			counts.medip = cbind(counts.medip, MSet2=genome_count(MSet2[[i]]))
-			rpkm.medip = cbind(rpkm.medip, ((genome_count(MSet2[[i]])*10^9)/(window_size*number_regions(MSet2[[i]]))))
+			rpkm.medip = cbind(rpkm.medip, round(((genome_count(MSet2[[i]])*10^9)/(window_size*number_regions(MSet2[[i]]))), digits=2))
 			if(MeDIP){
 				ccObj = MEDIPS.calibrationCurve(MSet=MSet2[[i]], CSet=CSet, input=F)
 				rms = cbind(rms, MEDIPS.rms(MSet2[[i]], CSet, ccObj=ccObj))
-				if(prob.method=="poisson"){prob = cbind(prob, MEDIPS.pois(MSet2[[i]], CSet, ccObj=ccObj))}
-				else if(prob.method=="negBinomial"){prob = cbind(prob, MEDIPS.negBin(MSet2[[i]], CSet, ccObj=ccObj))}
-				else{stop(paste("Method ", prob.method, " not supported.",  sep=""))}			
 			}
 	  	 }
 	}	
@@ -134,14 +127,14 @@ MEDIPS.meth = function(
 		for(i in 1:nISets1){
 			cat(paste("Preprocessing INPUT SET ", i, " in ISet1...\n", sep=""))
 			counts.input = cbind(counts.input, ISet1=genome_count(ISet1[[i]]))
-			rpkm.input = cbind(rpkm.input, ((genome_count(ISet1[[i]])*10^9)/(window_size*number_regions(ISet1[[i]]))))		
+			rpkm.input = cbind(rpkm.input, round(((genome_count(ISet1[[i]])*10^9)/(window_size*number_regions(ISet1[[i]]))), digits=2))
 		   }
 	}	
 	if(!is.null(ISet2)){
 		for(i in 1:nISets2){
 			cat(paste("Preprocessing INPUT SET ", i, " in ISet2...\n", sep=""))
 			counts.input = cbind(counts.input, ISet2=genome_count(ISet2[[i]]))
-			rpkm.input = cbind(rpkm.input, ((genome_count(ISet2[[i]])*10^9)/(window_size*number_regions(ISet2[[i]]))))
+			rpkm.input = cbind(rpkm.input, round(((genome_count(ISet2[[i]])*10^9)/(window_size*number_regions(ISet2[[i]]))), digits=2))
 		 	}
 	}		
 	
@@ -156,7 +149,6 @@ MEDIPS.meth = function(
 			counts.medip = counts.medip[fi,]
 			rpkm.medip = rpkm.medip[fi,]
 			rms = rms[fi,]
-			prob = prob[fi,]
 		}
 		if(!is.null(counts.input)){
 			counts.input = counts.input[fi,]
@@ -171,14 +163,12 @@ MEDIPS.meth = function(
 	col.names.count = NULL
 	col.names.rpkm = NULL
 	col.names.rms = NULL
-	col.names.prob = NULL	
 	if(nMSets1!=0){
 		for(i in 1:nMSets1){
 			col.names.count = c(col.names.count, paste(sample_name(MSet1[[i]]), ".counts", sep=""))
 			col.names.rpkm = c(col.names.rpkm, paste(sample_name(MSet1[[i]]), ".rpkm", sep=""))
 			if(MeDIP){
 				col.names.rms = c(col.names.rms, paste(sample_name(MSet1[[i]]), ".rms", sep=""))
-				col.names.prob = c(col.names.prob, paste(sample_name(MSet1[[i]]), ".prob", sep=""))
 			}
 		}		
 	}
@@ -188,7 +178,6 @@ MEDIPS.meth = function(
 			col.names.rpkm = c(col.names.rpkm, paste(sample_name(MSet2[[i]]), ".rpkm", sep=""))
 			if(MeDIP){
 				col.names.rms = c(col.names.rms, paste(sample_name(MSet2[[i]]), ".rms", sep=""))
-				col.names.prob = c(col.names.prob, paste(sample_name(MSet2[[i]]), ".prob", sep=""))
 			}
 		}		
 	}
@@ -201,8 +190,6 @@ MEDIPS.meth = function(
 		if(MeDIP){
 			rms = data.frame(rms)
 			colnames(rms) = col.names.rms
-			prob =  data.frame(prob)
-			colnames(prob) = col.names.prob
 		}
 	}		
 	
@@ -239,8 +226,8 @@ MEDIPS.meth = function(
 		##Correct for test selection if necessary
 		if((nMSets1<3 | nMSets2<3) & diff.method=="ttest"){
 			stop("Method 'ttest' is not valid for less than 3 replicates per group. Method 'edgeR' can be applied in this case.")
-		}
-	
+		}		
+		
 		if(diff.method=="edgeR"){
 			##Extract number of reads per sample
 			if(!is.null(MSet1)){
@@ -254,10 +241,23 @@ MEDIPS.meth = function(
 		 		for(i in 1:nMSets2){
 					n.r.M2 = c(n.r.M2, number_regions(MSet2[[i]]))	
 	  	 		}
-			}			
+			}	
+
+			#Quantile normalization
+			if(quantile){
+				cat("Performing quantile normalization on sequencing counts. Please note, the returned counts - but not the returned rpkm values - will be quantile normalized.\n")
+				counts.medip = preprocessCore::normalize.quantiles(as.matrix(counts.medip), copy=FALSE)	
+				counts.medip <- round(counts.medip)
+			}
+		
 			diff.results.list = MEDIPS.diffMeth(base=base, values=counts.medip, diff.method="edgeR", nMSets1=nMSets1, nMSets2=nMSets2, p.adj=p.adj, n.r.M1=n.r.M1, n.r.M2=n.r.M2, MeDIP=MeDIP, minRowSum=minRowSum)
 		}
 		else if(diff.method=="ttest"){
+
+			if(quantile){
+				stop("Quantile normalization not available for the t-test mode. Please chose edgeR or disable quantile normalization.\n")
+			}
+
 			if(type=="rpkm"){
 				diff.results.list = MEDIPS.diffMeth(base=base, values=rpkm.medip, diff.method="ttest", nMSets1=nMSets1, nMSets2=nMSets2, p.adj=p.adj, MeDIP=MeDIP, minRowSum=minRowSum)
 			}
@@ -305,7 +305,7 @@ MEDIPS.meth = function(
 	cat(paste("Creating results table...\n", sep=" "))
 	if(!is.null(counts.medip)){
 		if(MeDIP){
-			results = data.frame(base, counts.medip, rpkm.medip, rms, prob, stringsAsFactors=F)
+			results = data.frame(base, counts.medip, rpkm.medip, rms, stringsAsFactors=F)
 		}
 		else{
 			results = data.frame(base, counts.medip, rpkm.medip, stringsAsFactors=F)
@@ -321,12 +321,8 @@ MEDIPS.meth = function(
 		}
 	}
 	
-	##Add mean counts, rpkm, probs columns
-	
-	#if(nMSets1>1){
+	##Add mean counts, rpkm, rms columns
 	set1idx=1:(nMSets1)
-	#counts.mean.C=apply(FUN=mean,X=counts.medip[,set1idx,drop=F],MARGIN=1)
-	#rpkm.mean.C=apply(FUN=mean,X=rpkm.medip[,set1idx,drop=F],MARGIN=1)	
 	counts.mean.C=numeric(dim(counts.medip)[1])
 	rpkm.mean.C=numeric(dim(rpkm.medip)[1])
 	for (i in set1idx){
@@ -336,29 +332,21 @@ MEDIPS.meth = function(
 	counts.mean.C=counts.mean.C/nMSets1
 	rpkm.mean.C=rpkm.mean.C/nMSets1
 	if(MeDIP){
-		#rms.mean.C = apply(FUN=mean,X=rms[,set1idx,drop=F],MARGIN=1)	
-		#prob.mean.C = apply(FUN=mean,X=prob[,set1idx,drop=F],MARGIN=1)	
 		rms.mean.C =numeric(dim(rms)[1])
-		prob.mean.C =numeric(dim(prob)[1])
 		for (i in set1idx){
 			rms.mean.C=rms.mean.C+rms[,i]
-			prob.mean.C=prob.mean.C+prob[,i]
 		}
 		rms.mean.C=rms.mean.C/nMSets1
-		prob.mean.C=prob.mean.C/nMSets1
-		results = data.frame(results, MSets1.counts.mean=counts.mean.C, MSets1.rpkm.mean=rpkm.mean.C, MSets1.rms.mean=rms.mean.C, MSets1.prob.mean=prob.mean.C, stringsAsFactors=F)
-		rm(counts.mean.C,rpkm.mean.C,set1idx,rms.mean.C,prob.mean.C)
+		results = data.frame(results, MSets1.counts.mean=counts.mean.C, MSets1.rpkm.mean=rpkm.mean.C, MSets1.rms.mean=rms.mean.C, stringsAsFactors=F)
+		rm(counts.mean.C,rpkm.mean.C,set1idx,rms.mean.C)
 	}
 	else{
 		results = data.frame(results, MSets1.counts.mean=counts.mean.C, MSets1.rpkm.mean=rpkm.mean.C, stringsAsFactors=F)
 		rm(counts.mean.C,rpkm.mean.C,set1idx)
 	}
-	#}
 
 	if(nMSets2>0){
 		set2idx=(nMSets1+1):(nMSets1+nMSets2)
-		#counts.mean.T=apply(FUN=mean,X=counts.medip[,set2idx,drop=F],MARGIN=1)
-		#rpkm.mean.T=apply(FUN=mean,X=rpkm.medip[,set2idx,drop=F],MARGIN=1)	
 		counts.mean.T=numeric(dim(counts.medip)[1])
 		rpkm.mean.T=numeric(dim(rpkm.medip)[1])
 		for (i in set2idx){
@@ -369,18 +357,13 @@ MEDIPS.meth = function(
 		rpkm.mean.T=rpkm.mean.T/nMSets2
 
 		if(MeDIP){
-			#rms.mean.T = apply(FUN=mean,X=rms[,set2idx,drop=F],MARGIN=1)	
-			#prob.mean.T = apply(FUN=mean,X=prob[,set2idx,drop=F],MARGIN=1)	
 			rms.mean.T =numeric(dim(rms)[1])
-			prob.mean.T =numeric(dim(prob)[1])
 			for (i in set2idx){
 				rms.mean.T=rms.mean.T+rms[,i]
-				prob.mean.T=prob.mean.T+prob[,i]
 			}
 			rms.mean.T=rms.mean.T/nMSets2
-			prob.mean.T=prob.mean.T/nMSets2
-			results = data.frame(results, MSets2.counts.mean=counts.mean.T, MSets2.rpkm.mean=rpkm.mean.T, MSets2.rms.mean=rms.mean.T, MSets2.prob.mean=prob.mean.T, stringsAsFactors=F)
-			rm(counts.mean.T,rpkm.mean.T,set2idx,rms.mean.T,prob.mean.T)
+			results = data.frame(results, MSets2.counts.mean=counts.mean.T, MSets2.rpkm.mean=rpkm.mean.T, MSets2.rms.mean=rms.mean.T, stringsAsFactors=F)
+			rm(counts.mean.T,rpkm.mean.T,set2idx,rms.mean.T)
 		}
 		else{
 			results = data.frame(results, MSets2.counts.mean=counts.mean.T, MSets2.rpkm.mean=rpkm.mean.T, stringsAsFactors=F)
@@ -390,8 +373,6 @@ MEDIPS.meth = function(
 
 	if(nISets1>1){
 		setI1idx=1:(nISets1)
-		#counts.input.mean.C = apply(FUN=mean,X=counts.input[,setI1idx,drop=F],MARGIN=1)
-		#rpkm.input.mean.C = apply(FUN=mean,X=rpkm.input[,setI1idx,drop=F],MARGIN=1)
 		counts.input.mean.C = counts.input[,setI1idx[1]]
 		rpkm.input.mean.C = rpkm.input[,setI1idx[1]]
 		for (i in setI1idx[-1]){
@@ -405,8 +386,6 @@ MEDIPS.meth = function(
 	}
 	if(nISets2>1){
 		setI2idx=(nISets1+1):(nISets1+nISets2)
-		#counts.input.mean.T = apply(FUN=mean,X=counts.input[,setI2idx,drop=F],MARGIN=1)
-		#rpkm.input.mean.T = apply(FUN=mean,X=rpkm.input[,setI2idx,drop=F],MARGIN=1)
 		counts.input.mean.T = counts.input[,setI2idx[1]]
 		rpkm.input.mean.T = rpkm.input[,setI2idx[1]]
 		for (i in setI2idx[-1]){
@@ -420,7 +399,7 @@ MEDIPS.meth = function(
 		rm(counts.input.mean.T,rpkm.input.mean.T,setI2idx)
 	}
 	
-	if(MeDIP){rm(base, counts.medip, rpkm.medip, rms, prob, counts.input, rpkm.input)}
+	if(MeDIP){rm(base, counts.medip, rpkm.medip, rms, counts.input, rpkm.input)}
 	else{rm(base, counts.medip, rpkm.medip, counts.input, rpkm.input)}
 	gc()
 	
@@ -447,17 +426,17 @@ MEDIPS.meth = function(
 	##Add CNV results
 	if(!is.null(ISet1) & !is.null(ISet2)){
 		if(CNV){
-		cat(paste("Adding CNV results...\n", sep=" "))
-		dummy.results = matrix(ncol=1, nrow=(nrow(results)))
-		for(i in 1:nrow(cnv.combined)){
-			dummy.results[cnv.combined[i,1]:cnv.combined[i,2]] = cnv.combined[i,3]		
-		}
+			cat(paste("Adding CNV results...\n", sep=" "))
+			dummy.results = matrix(ncol=1, nrow=(nrow(results)))
+			for(i in 1:nrow(cnv.combined)){
+				dummy.results[cnv.combined[i,1]:cnv.combined[i,2]] = cnv.combined[i,3]		
+			}
 		colnames(dummy.results)="CNV.log2.ratio"
 		results = data.frame(results, dummy.results, stringsAsFactors=F)
 		
 		rm(dummy.results)	
 		gc()
-	}
+		}
 	}
 	
 	rownames(results) = seq(1, nrow(results))

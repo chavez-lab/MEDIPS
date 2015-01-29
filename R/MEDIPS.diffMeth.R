@@ -2,13 +2,13 @@
 ##Function provides two moudiles for calculating differential methylation
 ##########################################################################
 ##Input:	genomic coordinates and data for groups of MEDIPS SETs
-##Param:	base, values, diff.method, nMSets1, nMSets2, p.adj
+##Param:	base, values, diff.method, nMSets1, nMSets2, p.adj, n.r.M1, n.r.M2, p.adj, MeDIP, minRowSum
 ##Output:	results of differential methylation analysis plus index in genome wide table
 ##Requires:	edgeR
-##Modified:	11/22/2011
+##Modified:	1/9/2015
 ##Author:	Lukas Chavez, Joern Dietrich
 
-MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets1=NULL, nMSets2=NULL, n.r.M1=n.r.M1, n.r.M2=n.r.M2, p.adj="bonferroni", MeDIP, minRowSum=12)
+MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets1=NULL, nMSets2=NULL, n.r.M1=n.r.M1, n.r.M2=n.r.M2, p.adj="bonferroni", MeDIP, minRowSum=10)
 {
 	##edgeR##
 	#########
@@ -17,8 +17,8 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 		##Extract non-zero MeDIP count windows
 		cat(paste("Extracting count windows with at least", minRowSum, "reads...\n", sep=" "))
 		filter= rowSums(values)>=minRowSum
-		##Extract non-zero coupling factor rows
 
+		##Extract non-zero coupling factor rows
 		if(MeDIP){
 			cat(paste("Extracting non-zero coupling factor windows...\n", sep=" "))
 			filter=filter & base[,4]!=0
@@ -31,9 +31,6 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 		edRObj.group=c(rep(1, nMSets1), rep(2, nMSets2))
 		edRObj.length=c(n.r.M1, n.r.M2)
 		d <- edgeR::DGEList(counts = values[filter,], group = edRObj.group, lib.size=edRObj.length)
-
-		#rm(values)
-		#gc()
 
 		cat("Apply trimmed mean of M-values (TMM) for library sizes normalization...\n")	
 		d=edgeR::calcNormFactors(d)
@@ -58,7 +55,6 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 		cat(paste("Adjusting p.values for multiple testing...\n", sep=" "))
 		colnames(de.com$table) = c("edgeR.logFC", "edgeR.logCPM", "edgeR.p.value")		
 		diff.results = cbind(de.com$table, edgeR.adj.p.value=p.adjust(de.com$table$edgeR.p.value, p.adj)) 
-		#diff.index = match(rownames(base.sub), rownames(base))
 		
 		rm(de.com, edRObj.group, edRObj.length, d)
 		gc()

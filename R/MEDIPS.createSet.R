@@ -5,10 +5,10 @@
 ##Param:	[path]+file name, extend, shift, window_size, BSgenome, uniq (T | F), chr.select
 ##Output:	MEDIPS SET
 ##Requires:	gtools, BSgenome
-##Modified:	11/10/2011
+##Modified:	11/1/2015
 ##Author:	Lukas Chavez
 
-MEDIPS.createSet <- function(file=NULL, extend=0, shift=0, window_size=300, BSgenome=NULL, uniq=TRUE, chr.select=NULL, paired=F, sample_name=NULL){
+MEDIPS.createSet <- function(file=NULL, extend=0, shift=0, window_size=300, BSgenome=NULL, uniq=TRUE, chr.select=NULL, paired=F, sample_name=NULL, bwa=FALSE){
 			
 	## Proof of correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}
@@ -18,41 +18,52 @@ MEDIPS.createSet <- function(file=NULL, extend=0, shift=0, window_size=300, BSge
 	fileName=unlist(strsplit(file, "/"))[length(unlist(strsplit(file, "/")))]
 	path=paste(unlist(strsplit(file, "/"))[1:(length(unlist(strsplit(file, "/"))))-1], collapse="/") 
 	if(path==""){path=getwd()}
-		
-	# Chromosomes should be sorted
-	if(! is.null(chr.select))
-		chr.select=mixedsort(unique(chr.select))
+
+	dataset=get(ls(paste("package:", BSgenome, sep="")))
+
+	#default chromosome setting
+	if(is.null(chr.select)){
+		cat("All chromosomes in the reference BSgenome will be processed:\n")
+		chr.select=seqnames(dataset)
+		print(chr.select)
+	}else{
+		if(sum(!chr.select%in%seqnames(dataset))!=0){
+			cat("The requested chromosome(s)", chr.select[!chr.select%in%seqnames(dataset)], "are not available in the BSgenome reference. Chromosomes available in the BSgenome reference:", seqnames(dataset), "\n")
+			stop("Please check chromosome names.")
+		}
+	}	
+	if(length(chr.select)>1){chr.select=mixedsort(unique(chr.select))}
+
 	if(!fileName%in%dir(path)){stop(paste("File", fileName, " not found in", path, sep =" "))}
 		ext=strsplit(fileName, ".", fixed=T)[[1]]	
 	if (ext[length(ext)] %in% c("gz","zip","bz2"))
 		ext=ext[-length(ext)]
+
 	if(ext[length(ext)] %in% c("wig","bw","bigwig")){
 		#read object from wig (or bigwig) file
 		MEDIPSsetObj=getMObjectFromWIG(fileName, path, chr.select, BSgenome)
 	}else{
 		#read bam or bed file
 		if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, uniq)}
-		else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, uniq)}
+		else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, uniq, bwa)}
 				
-		## Sort chromosomes
-		if(length(unique(seqlevels(GRange.Reads)))>1){chromosomes=mixedsort(unique(seqlevels(GRange.Reads)))}
-		if(length(unique(seqlevels(GRange.Reads)))==1){chromosomes=unique(seqlevels(GRange.Reads))}
-	
 		## Get chromosome lengths for all chromosomes within data set.
-		#cat(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))		
-		dataset=get(ls(paste("package:", BSgenome, sep="")))
-		#chr_lengths=as.numeric(sapply(chromosomes, function(x){as.numeric(length(dataset[[x]]))}))
-		chr_lengths=as.numeric(seqlengths(dataset)[chromosomes])
+		chr_lengths=as.numeric(seqlengths(dataset)[chr.select])
 
 		## Create the genome vector Granges object	
 		no_chr_windows = ceiling(chr_lengths/window_size)	
 		supersize_chr = cumsum(no_chr_windows)	
-		Granges.genomeVec = MEDIPS.GenomicCoordinates(supersize_chr, no_chr_windows, chromosomes, chr_lengths, window_size)	
+		Granges.genomeVec = MEDIPS.GenomicCoordinates(supersize_chr, no_chr_windows, chr.select, chr_lengths, window_size)	
 			
 		##Distribute reads over genome
-		cat("Calculating short read coverage for genome wide windows...\n")
+		cat("Calculating short read coverage at genome wide windows...\n")
 		overlap = countOverlaps(Granges.genomeVec, GRange.Reads)
-			
+		
+		datachr = unique(seqlevels(GRange.Reads))
+		if(sum(!chr.select%in%datachr)!=0){
+			cat("Please note, no data in the alignment file for chromosome(s):", chr.select[!chr.select%in%datachr], "\n")	
+		}
+
 		##Set sample name
 		if(is.null(sample_name)){
 			sample_name = fileName
@@ -63,7 +74,7 @@ MEDIPS.createSet <- function(file=NULL, extend=0, shift=0, window_size=300, BSge
 				                        path_name=path,
 				                        genome_name=BSgenome, 
 							number_regions=length(GRange.Reads), 
-							chr_names=chromosomes, 
+							chr_names=chr.select, 
 							chr_lengths=chr_lengths, 
 							genome_count=overlap, 
 							extend=extend,

@@ -4,7 +4,7 @@
 ##Input:	MEDIPS SET and COUPLING SET
 ##Param:	MSet, CSet, input [T | F]
 ##Output:	List of calibration curve and linear regression results
-##Modified:	11/15/2011
+##Modified:	1/09/2015
 ##Author:	Lukas Chavez
 
 ###############
@@ -22,25 +22,42 @@ MEDIPS.calibrationCurve <- function(MSet=NULL, CSet=NULL, input=FALSE){
 	
 	count_decrease_steps = 0
 	max_signal_index = NULL
-	
+
+	first = TRUE
+	n_coupling = 0
+
 	for(i in 1:(maxCoup+1)){		
+
+		#Test if coupling level is non-empty (can happen for ROIs)
+		if(length(signal[coupling==i-1])>0){
+
+			n_coupling = n_coupling + 1
+			mean_signal = c(mean_signal, mean(signal[coupling==i-1], trim=0.1))
+			coupling_level = c(coupling_level, i-1)
 		
-		mean_signal = c(mean_signal, mean(signal[coupling==i-1], trim=0.1))
-		coupling_level = c(coupling_level, i-1)
-		
-		##Test if mean_signal decreases
-		if(i!=1){
-			if(is.null(max_signal_index) & mean_signal[i]<mean_signal[i-1]){				
-				count_decrease_steps=count_decrease_steps+1
-				if(count_decrease_steps==3){
-					max_signal_index=i-3		
+			##Test if mean_signal decreases
+			if(!first){
+
+				if(is.null(max_signal_index) & mean_signal[n_coupling]<mean_signal[n_coupling-1]){				
+					count_decrease_steps=count_decrease_steps+1
+					if(count_decrease_steps==3){
+						max_signal_index=n_coupling-3		
+					}
 				}
+				else if(is.null(max_signal_index) & mean_signal[n_coupling]>=mean_signal[n_coupling-1]){
+					count_decrease_steps=0
+				}	
 			}
-			else if(is.null(max_signal_index) & mean_signal[i]>=mean_signal[i-1]){
-				count_decrease_steps=0
-			}	
+			else{
+				first = FALSE
+			}
+		} 
+		else{
+			cat(paste("Skipping coupling level ", i, " (no data).\n", sep=""))
 		}						
 	}
+
+	if(!input & is.null(max_signal_index)){stop("The dependency of coverage signals on sequence pattern (e.g. CpG) densities is different than expected. No linear model can be build, please check the calibration plot by providing the MSet object at ISet.")}
 				
  	if(!input){
 		##Linear curve by linear least squares regression

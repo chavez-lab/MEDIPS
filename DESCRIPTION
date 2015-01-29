@@ -1,24 +1,23 @@
 Package: MEDIPS
 Type: Package
-Title: (MeD)IP-seq data analysis
-Version: 1.17.0
-Date: 2013-07-09
-Author: Lukas Chavez, Matthias Lienhard, Joern Dietrich
+Title: DNA IP-seq data analysis
+Version: 1.17.1
+Date: 2015-01-29
+Author: Lukas Chavez, Matthias Lienhard, Joern Dietrich, Isaac Lopez Moyado
 Maintainer: Lukas Chavez <lchavez@liai.org>
 Description: MEDIPS was developed for analyzing data derived from
         methylated DNA immunoprecipitation (MeDIP) experiments followed
-        by sequencing (MeDIP-seq). However, MEDIPS provides several
-        functionalities for the analysis of other kinds of quantitative
+        by sequencing (MeDIP-seq). However, MEDIPS provides functionalities for the analysis of any kinds of quantitative
         sequencing data (e.g. ChIP-seq, MBD-seq, CMS-seq and others)
         including calculation of differential coverage between groups
-        of samples as well as saturation and correlation analyses.
+        of samples and saturation and correlation analysis.
 License: GPL (>=2)
 LazyLoad: yes
-Depends: R (>= 3.0), BSgenome, DNAcopy
-Imports: Biostrings, BSgenome, Rsamtools, graphics, gtools, IRanges,
-        methods, stats, utils, GenomicRanges, edgeR, GenomicFeatures,
-        DNAcopy, biomaRt, rtracklayer
-Suggests: BSgenome, BSgenome.Hsapiens.UCSC.hg19, MEDIPSData
+Depends: R (>= 3.0), BSgenome, Rsamtools
+Imports: GenomicRanges, Biostrings, graphics, gtools, IRanges,
+        methods, stats, utils, edgeR,
+        DNAcopy, biomaRt, rtracklayer, preprocessCore
+Suggests: BSgenome.Hsapiens.UCSC.hg19, MEDIPSData, BiocStyle
 biocViews: DNAMethylation, CpGIsland,
         DifferentialExpression, Sequencing, ChIPSeq, Preprocessing,
-        QualityControl, Visualization
+        QualityControl, Visualization, Microarray, Genetics, Coverage, GenomeAnnotation, CopyNumberVariation, SequenceMatching

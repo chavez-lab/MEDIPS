@@ -32,9 +32,9 @@ MEDIPS.correlation <- function(MSets=NULL, plot=T, method="pearson"){
 		
 			c=cor(MSets[[i]]@genome_count, MSets[[j]]@genome_count, method=method)
 			cor.matrix[i,j]=c
-			if(plot){
+			if(plot & i!=j){
 				png(paste("Scatter_", sample_name(MSets[[i]]), "_vs_", sample_name(MSets[[j]]), ".png", sep=""))
-				plot(log2(MSets[[i]]@genome_count), log2(MSets[[j]]@genome_count), pch=".", main=paste("Scater_", sample_name(MSets[[i]]), "_vs_", sample_name(MSets[[j]]),  sep=""), sub=paste("Pearson correlation: ", round(cor.matrix[i,j], digits=2), sep=""), xlab=paste(sample_name(MSets[[i]]), " log2(counts)", sep=""), ylab=paste(sample_name(MSets[[j]]), " log2(counts)", sep=""))
+				plot(log2(MSets[[i]]@genome_count), log2(MSets[[j]]@genome_count), pch=".", main=paste("Scater_", sample_name(MSets[[i]]), "_vs_", sample_name(MSets[[j]]),  sep=""), sub=paste(method, " correlation: ", round(cor.matrix[i,j], digits=2), sep=""), xlab=paste(sample_name(MSets[[i]]), " log2(counts)", sep=""), ylab=paste(sample_name(MSets[[j]]), " log2(counts)", sep=""))
 				dev.off()
 			}
 		}

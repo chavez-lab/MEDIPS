@@ -9,19 +9,23 @@ The wiggle file will contain values for all genomic windows of the genome/coupli
 Either a MEDIPS SET (parameter MSet) or a COUPLING SET (parameter CSet) has to be given. 
 }
 \usage{
-MEDIPS.exportWIG(Set=NULL, file=NULL, format="rpkm", descr="")
+MEDIPS.exportWIG(Set=NULL, CSet=NULL, file=NULL, format="rpkm", descr="")
 }
 \arguments{
   \item{Set}{
-has to be a MEDIPS SET or COUPLING SET object. In case of a MEDIPS SET, the parameter 'format' has to be either 'count' or 'rpkm'.
+has to be a MEDIPS SET object. Required when the parameter 'format' is 'count', 'rpkm', or 'rms'.
+}
+  \item{CSet}{
+has to be a COUPLING SET object. Required when the parameter 'format' is 'pdensity' or 'rms'.
 }
   \item{file}{
 defines the name of the exported file
 }
   \item{format}{
-if set to "count", there must be a MEDIPS SET at 'Set', and the number of overlapping (extended) short reads per window will be exported.
-if set to "rpkm", there must be a MEDIPS SET at 'Set', and rpkm values will be exported (default). 
-If set to "pdensity", there must be a COUPLING SET at 'Set', and the pattern densities (counts per window) will be exported.
+if set to "count", there must be a MEDIPS SET at 'Set'. The number of overlapping (extended) short reads per window will be exported.
+if set to "rpkm", there must be a MEDIPS SET at 'Set'. The rpkm values will be exported (default). 
+If set to "pdensity", there must be a COUPLING SET at 'CSet'. The pattern densities (counts per window) will be exported (parameter Set will be ignored).
+If set to 'rms', there must be a MEDIPS SET at 'Set' and a corresponding COUPLING SET at 'CSet'. The CpG density normalized methylatin estimates will be exported.
 }
   \item{descr}{
 the exported wiggle file will include a track name and description that will be visualized by the utilized genome browser.

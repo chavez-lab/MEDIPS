@@ -45,7 +45,7 @@ MEDIPS.createSet <- function(file=NULL, extend=0, shift=0, window_size=300, BSge
 	}else{
 		#read bam or bed file
 		if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, uniq)}
-		else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, uniq, bwa)}
+		else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, uniq, bwa=bwa)}
 				
 		## Get chromosome lengths for all chromosomes within data set.
 		chr_lengths=as.numeric(seqlengths(dataset)[chr.select])

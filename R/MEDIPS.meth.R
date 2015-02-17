@@ -246,8 +246,10 @@ MEDIPS.meth = function(
 			#Quantile normalization
 			if(quantile){
 				cat("Performing quantile normalization on sequencing counts. Please note, the returned counts - but not the returned rpkm values - will be quantile normalized.\n")
+				counts.medip.coln = colnames(counts.medip)				
 				counts.medip = preprocessCore::normalize.quantiles(as.matrix(counts.medip), copy=FALSE)	
 				counts.medip <- round(counts.medip)
+				colnames(counts.medip) = counts.medip.coln
 			}
 		
 			diff.results.list = MEDIPS.diffMeth(base=base, values=counts.medip, diff.method="edgeR", nMSets1=nMSets1, nMSets2=nMSets2, p.adj=p.adj, n.r.M1=n.r.M1, n.r.M2=n.r.M2, MeDIP=MeDIP, minRowSum=minRowSum)

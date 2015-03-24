@@ -136,8 +136,8 @@ getPairedGRange <- function(fileName, path=NULL,extend, shift, chr.select=NULL, 
 	else{
 		regions = data.frame(chr=as.character(as.vector(regions$rname)), start=as.numeric(as.vector(regions$pos)), stop=as.numeric(as.vector(regions$pos)+as.vector(regions$qwidth)-1), strand=as.character(as.vector(regions$strand)), isize=as.numeric(as.vector(regions$isize)), stringsAsFactors=F)
 		plus=regions$strand=="+"
-		regions[plus, "stop"] = regions[plus, "stop"] + regions[plus, "isize"] + extend
-		regions[!plus, "start"] = regions[!plus, "start"] + regions[!plus,"isize" ] - extend
+		regions[plus, "stop"] = regions[plus, "start"] + regions[plus, "isize"] + extend
+		regions[!plus, "start"] = regions[!plus, "stop"] + regions[!plus,"isize" ] - extend
 	}
 
 	regions[, "stop"]=regions[, "stop"]+shift

@@ -11,7 +11,7 @@
 
 
 MEDIPS.saturation<-
-function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=TRUE, chr.select=NULL, paired=F){
+function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired=F){
 	
 	## Proof of correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}
@@ -23,8 +23,9 @@ function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, 
 	if(path==""){path=getwd()}		
 	if(!fileName%in%dir(path)){stop(paste("File", fileName, " not found in", path, sep =" "))}
 	
-	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, uniq)}
-	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, uniq)}
+	dataset=get(ls(paste("package:", BSgenome, sep="")))
+	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, dataset, uniq)}
+	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, dataset, uniq, bwa=bwa)}
 
 	## Sort chromosomes
 	if(length(unique(seqlevels(GRange.Reads)))>1){chromosomes=mixedsort(unique(seqlevels(GRange.Reads)))}
@@ -32,7 +33,6 @@ function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, 
 	
 	## Get chromosome lengths for all chromosomes within data set.
 	cat(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))		
-	dataset=get(ls(paste("package:", BSgenome, sep="")))
 	#chr_lengths=as.numeric(sapply(chromosomes, function(x){as.numeric(length(dataset[[x]]))}))
 	chr_lengths=as.numeric(seqlengths(dataset)[chromosomes])	
 	

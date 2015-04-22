@@ -10,7 +10,7 @@ BiocStyle::latex()
 @
 
 \bioctitle[MEDIPS]{MEDIPS: genome-wide differential coverage analysis of sequencing data derived from DNA enrichment experiments.}
-\author{Lukas Chavez\footnote{lchavez@liai.org}}
+\author{Lukas Chavez\footnote{l.chavez@dkfz.de}}
 
 \begin{document}
 
@@ -158,10 +158,13 @@ The reference genome is hg19:
 <<echo=T, eval=T, results=hide>>=
 BSgenome="BSgenome.Hsapiens.UCSC.hg19"
 @
-\Biocpkg{MEDIPS} will replace all reads which map to exactly the same start and end positions on the same strand by only one representative:  
+To avoid artefacts caused by PCR over amplification \Biocpkg{MEDIPS} determines a maximal allowed number of stacked reads per genomic position by a poisson distribution of stacked reads genome wide and by a given p-value:
 <<echo=T, eval=T, results=hide>>=
-uniq=TRUE
+uniq=1e-3
 @
+Alternatively, all reads mapping to exactly the same genomic position can be maintained (uniq = 0) or replaced by only one representative (uniq = 1).
+
+
 All reads will be extended to a length of 300nt according to the given strand information:
 <<echo=T, eval=T, results=hide>>=
 extend=300

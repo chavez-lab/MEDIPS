@@ -43,7 +43,7 @@ Lukas Chavez
 library("BSgenome.Hsapiens.UCSC.hg19")
 
 bam.file.hESCs.Rep1.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep1.chr22.bam", package="MEDIPSData")
-MSet=MEDIPS.createSet(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", chr.select="chr22", extend=250, shift=0, uniq=TRUE)
+MSet=MEDIPS.createSet(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", chr.select="chr22", extend=250, shift=0, uniq=1e-3)
 
 MEDIPS.exportWIG(Set=MSet, file="hESCs.Rep1.wig", format="rpkm", descr="hESCs.Rep1")
 

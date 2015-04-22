@@ -10,7 +10,7 @@
 
 MEDIPS.selectSig = function(results=NULL, p.value=0.01, adj=T, ratio=NULL, bg.counts=NULL, CNV=F){
 	
-	if(is.null(results)){stop("Must specify a frame set.")}		
+	if(is.null(results)){stop("Must specify a result table.")}		
 	cat(paste("Total number of windows: ", nrow(results), "\n", sep=""))		
 
 	##Background counts- preparation

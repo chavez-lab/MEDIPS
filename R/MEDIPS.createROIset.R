@@ -2,13 +2,13 @@
 ##Creates MEDIPS SET of type S4 from input data (i.e. aligned short reads)
 ##########################################################################
 ##Input:	bam file or tab (|) separated BED txt file
-##Param:	[path]+file name, [path]+file roi name, extend, shift, window_size, BSgenome, uniq (T | F), chr.select
+##Param:	[path]+file name, [path]+file roi name, extend, shift, window_size, BSgenome, uniq, chr.select
 ##Output:	MEDIPS SET
 ##Requires:	gtools, BSgenome
 ##Modified:	11/01/2015
 ##Author:	Lukas Chavez
 
-MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BSgenome=NULL, uniq=TRUE, chr.select=NULL, paired=F, sample_name=NULL, bwa=FALSE){
+MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BSgenome=NULL, uniq=1e-3, chr.select=NULL, paired=F, sample_name=NULL, bwa=FALSE){
 			
 	## Proof of correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}
@@ -51,8 +51,8 @@ MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BS
 	## Sort chromosomes
         if(length(chromosomes)>1){chromosomes=mixedsort(chromosomes)}
 	
-	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chromosomes, uniq, ROI)}
-	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chromosomes, uniq, ROI, bwa)}
+	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chromosomes, dataset, uniq, ROI=ROI)}
+	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chromosomes, dataset, uniq, ROI=ROI, bwa=bwa)}
 				
 	## Get chromosome lengths for all chromosomes within data set.
 	cat(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))		

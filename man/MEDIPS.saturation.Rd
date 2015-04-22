@@ -9,7 +9,7 @@ The main idea is that an insufficent number of short reads will not result in a 
 Only if there is a sufficient number of short reads, the resulting genome wide coverage profile will be reproducible by another independent set of a similar number of short reads.
 }
 \usage{
-MEDIPS.saturation(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=TRUE, chr.select=NULL, paired = F)
+MEDIPS.saturation(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired = F)
 }
 \arguments{
   \item{file}{
@@ -51,7 +51,7 @@ Please note, the extend and shift parameter are mutual exclusive.
 defines the size of genome wide windows and therefore, the size of the genome vector. 
 }
 \item{uniq}{
-if uniq=TRUE (default), all reads with exactly the same start and end positions will be replaced by one representative before the saturation analysis is performed.
+The uniq parameter determines, if all reads mapping to exactly the same genomic position should be kept (uniq = 0), replaced by only one representative (uniq = 1), or if the number of stacked reads should be capped by a maximal number of stacked reads per genomic position determined by a poisson distribution of stacked reads genome wide and by a given p-value (1 > uniq > 0) (deafult: 1e-3).
 }
 \item{chr.select}{
 specify a subset of chromosomes for which the saturation analysis is performed.
@@ -78,6 +78,6 @@ library(MEDIPSData)
 library(BSgenome.Hsapiens.UCSC.hg19)
 bam.file.hESCs.Rep1.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep1.chr22.bam", package="MEDIPSData")
 
-sr=MEDIPS.saturation(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", uniq=TRUE, extend=250, shift=0, window_size=100, chr.select="chr22", nit=10, nrit=1, empty_bins=TRUE, rank=FALSE)
+sr=MEDIPS.saturation(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", uniq=1e-3, extend=250, shift=0, window_size=100, chr.select="chr22", nit=10, nrit=1, empty_bins=TRUE, rank=FALSE)
 
 }

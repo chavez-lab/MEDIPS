@@ -13,7 +13,7 @@ The final enrichment values result by dividing the relative frequency of CpGs (o
 the relative frequency of CpGs (or the observed/expected value, respectively) of the reference genome.
 }
 \usage{
-MEDIPS.CpGenrich(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=TRUE, chr.select=NULL, paired=F)
+MEDIPS.CpGenrich(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F)
 }
 \arguments{
    \item{file}{
@@ -31,7 +31,7 @@ As an alternative to the extend parameter, the shift parameter can be specified.
 One of the two parameters extend or shift has to be 0. 
 }
 \item{uniq}{
-MEDIPS will replace all reads which map to exactly the same start and end positions by only one representative, if uniq=TRUE
+The uniq parameter determines, if all reads mapping to exactly the same genomic position should be kept (uniq = 0), replaced by only one representative (uniq = 1), or if the number of stacked reads should be capped by a maximal number of stacked reads per genomic position determined by a poisson distribution of stacked reads genome wide and by a given p-value (1 > uniq > 0) (deafult: 1e-3).
 }
 \item{chr.select}{
 only data at the specified chromosomes will be processed.
@@ -63,5 +63,5 @@ library(MEDIPSData)
 library("BSgenome.Hsapiens.UCSC.hg19")
 bam.file.hESCs.Rep1.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep1.chr22.bam", package="MEDIPSData")
 
-#er=MEDIPS.CpGenrich(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", chr.select="chr22", extend=0, shift=0, uniq=TRUE)
+#er=MEDIPS.CpGenrich(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", chr.select="chr22", extend=0, shift=0, uniq=1e-3)
 }

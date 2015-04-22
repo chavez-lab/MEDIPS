@@ -40,7 +40,7 @@ library(MEDIPSData)
 library(BSgenome.Hsapiens.UCSC.hg19)
 bam.file.hESCs.Rep1.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep1.chr22.bam", package="MEDIPSData")
 
-cr=MEDIPS.seqCoverage(file=bam.file.hESCs.Rep1.MeDIP, pattern="CG", BSgenome="BSgenome.Hsapiens.UCSC.hg19", chr.select="chr22", extend=250, shift=0, uniq=TRUE, paired=FALSE)
+cr=MEDIPS.seqCoverage(file=bam.file.hESCs.Rep1.MeDIP, pattern="CG", BSgenome="BSgenome.Hsapiens.UCSC.hg19", chr.select="chr22", extend=250, shift=0, uniq=1e-3, paired=FALSE)
 
 MEDIPS.plotSeqCoverage(seqCoverageObj=cr, main="Sequence pattern coverage", type="pie", cov.level = c(0,1,2,3,4,5))
 

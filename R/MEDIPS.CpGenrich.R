@@ -10,7 +10,7 @@
 ##Author:	Joern Dietrich, Lukas Chavez
 
 
-MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=TRUE, chr.select=NULL, paired=F){
+MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F){
 
 	## Proof correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}

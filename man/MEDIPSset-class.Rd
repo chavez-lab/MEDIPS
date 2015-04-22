@@ -73,7 +73,7 @@ According slots will be filled during the workflow.
 	\item{\code{genome_count}:}{Object of class \code{"numeric"} : the raw MeDIP-seq signals at the genomic bins }    
 	\item{\code{extend}:}{Object of class \code{"numeric"} : the length of the regions after extension }
 	\item{\code{shifted}:}{Object of class \code{"numeric"} : the number of bases by which the reads are shifted along the sequencing direction }
-	\item{\code{uniq}:}{Object of class \code{"logical"} : determines if reads mapping to exactly the same genomic position should be replaced by only one representative }                
+	\item{\code{uniq}:}{Object of class \code{"logical"} : determines if all reads mapping to exactly the same genomic position should be kept (uniq = 0), replaced by only one representative (uniq = 1), or if the number of stacked reads should be capped by a maximal number of stacked reads per genomic position determined by a poisson distribution of stacked reads genome wide and by a given p-value (1 > uniq > 0).}                
   }
 }
 \section{Methods}{

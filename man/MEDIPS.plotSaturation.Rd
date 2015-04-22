@@ -29,7 +29,7 @@ library(MEDIPSData)
 library(BSgenome.Hsapiens.UCSC.hg19)
 bam.file.hESCs.Rep1.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep1.chr22.bam", package="MEDIPSData")
 
-sr=MEDIPS.saturation(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", uniq=TRUE, extend=250, shift=0, window_size=100, chr.select="chr22", nit=10, nrit=1, empty_bins=TRUE, rank=FALSE)
+sr=MEDIPS.saturation(file=bam.file.hESCs.Rep1.MeDIP, BSgenome="BSgenome.Hsapiens.UCSC.hg19", uniq=1e-3, extend=250, shift=0, window_size=100, chr.select="chr22", nit=10, nrit=1, empty_bins=TRUE, rank=FALSE)
 MEDIPS.plotSaturation(saturationObj = sr, main="Saturation analysis")
 
 }

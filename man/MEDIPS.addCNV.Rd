@@ -38,8 +38,8 @@ library("BSgenome.Hsapiens.UCSC.hg19")
 bam.file.hESCs.Input = system.file("extdata", "hESCs.Input.chr22.bam", package="MEDIPSData")
 bam.file.DE.Input = system.file("extdata", "DE.Input.chr22.bam", package="MEDIPSData")
 
-hESCs.Input = MEDIPS.createSet(file=bam.file.hESCs.Input, BSgenome="BSgenome.Hsapiens.UCSC.hg19", extend=250, shift=0, uniq=TRUE, window_size=100, chr.select="chr22")
-DE.Input = MEDIPS.createSet(file=bam.file.DE.Input, BSgenome="BSgenome.Hsapiens.UCSC.hg19", extend=250, shift=0, uniq=TRUE, window_size=100, chr.select="chr22")
+hESCs.Input = MEDIPS.createSet(file=bam.file.hESCs.Input, BSgenome="BSgenome.Hsapiens.UCSC.hg19", extend=250, shift=0, uniq=1e-3, window_size=100, chr.select="chr22")
+DE.Input = MEDIPS.createSet(file=bam.file.DE.Input, BSgenome="BSgenome.Hsapiens.UCSC.hg19", extend=250, shift=0, uniq=1e-3, window_size=100, chr.select="chr22")
 
 data(resultTable)
 

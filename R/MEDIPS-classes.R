@@ -11,7 +11,7 @@ setClass(Class = 'MEDIPSset',
 					window_size='numeric', 
 					extend='numeric',
 					shifted='numeric',
-					uniq='logical'				
+					uniq='numeric'				
 					),
 	prototype = prototype(),
 	validity = function(object){
@@ -52,7 +52,7 @@ setClass(Class = 'MEDIPSroiSet',
 					bin_number='numeric', 
 					extend='numeric',
 					shifted='numeric',
-					uniq='logical',
+					uniq='numeric',
 					ROI='GRanges'	
 					),
 	prototype = prototype(),

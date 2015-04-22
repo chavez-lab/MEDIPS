@@ -10,7 +10,7 @@ After reading of the input file, the MEDIPS ROI SET contains information about t
 the dependent organism, the chromosomes included in the input file, the length of the included chromosomes (automatically loaded), the number of regions, and a GRange object of the ROIs. 
 }
 \usage{
-MEDIPS.createROIset(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BSgenome=NULL, uniq=TRUE, chr.select=NULL, paired = F, sample_name=NULL, bwa=FALSE)
+MEDIPS.createROIset(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BSgenome=NULL, uniq=1e-3, chr.select=NULL, paired = F, sample_name=NULL, bwa=FALSE)
 }
 \arguments{
    \item{file}{
@@ -34,7 +34,7 @@ Number of bins per ROI
 The reference genome name as defined by BSgenome 
 }
 \item{uniq}{
-MEDIPS will replace all reads which map to exactly the same start and end positions by only one representative, if uniq=TRUE
+The uniq parameter determines, if all reads mapping to exactly the same genomic position should be kept (uniq = 0), replaced by only one representative (uniq = 1), or if the number of stacked reads should be capped by a maximal number of stacked reads per genomic position determined by a poisson distribution of stacked reads genome wide and by a given p-value (1 > uniq > 0) (deafult: 1e-3).
 }
 \item{chr.select}{
 only data at the specified chromosomes will be processed.
@@ -60,5 +60,5 @@ Lukas Chavez and Matthias Lienhard
 library("BSgenome.Hsapiens.UCSC.hg19")
 bam.file.hESCs.Rep1.MeDIP = system.file("extdata", "hESCs.MeDIP.Rep1.chr22.bam", package="MEDIPSData")
 rois=data.frame(chr=c("chr22","chr22"), start=c(19136001, 19753401), stop=c(19136200, 19753500), ID=c("ID_1", "ID_2"))
-MSet=MEDIPS.createROIset(file=bam.file.hESCs.Rep1.MeDIP,ROI=rois, BSgenome="BSgenome.Hsapiens.UCSC.hg19", extend=250, shift=0, uniq=TRUE)
+MSet=MEDIPS.createROIset(file=bam.file.hESCs.Rep1.MeDIP,ROI=rois, BSgenome="BSgenome.Hsapiens.UCSC.hg19", extend=250, shift=0, uniq=1e-3)
 }

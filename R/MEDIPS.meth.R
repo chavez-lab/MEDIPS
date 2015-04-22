@@ -7,7 +7,7 @@
 ##Param:	MSet1, MSet2, CSet, ISet1, ISet2, chr, p.adj, diff.method, type, minRowSum, quantile
 ##Output:	Result table
 ##Requires:	DNAcopy
-##Modified:	01/09/2014
+##Modified:	04/02/2015
 ##Author:	Lukas Chavez
 
 MEDIPS.meth = function(

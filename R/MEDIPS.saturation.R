@@ -11,7 +11,7 @@
 
 
 MEDIPS.saturation<-
-function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired=F){
+function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired=F, bwa = FALSE){
 	
 	## Proof of correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}

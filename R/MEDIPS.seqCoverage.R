@@ -9,7 +9,7 @@
 ##Author:	Lukas Chavez
 
 MEDIPS.seqCoverage<-                                  
-function(file=NULL, BSgenome=NULL, pattern="CG", extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F){
+function(file=NULL, BSgenome=NULL, pattern="CG", extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F, bwa = FALSE){
 	
 	## Proof of correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}

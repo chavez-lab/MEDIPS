@@ -162,6 +162,7 @@ To avoid artefacts caused by PCR over amplification \Biocpkg{MEDIPS} determines 
 <<echo=T, eval=T, results=hide>>=
 uniq=1e-3
 @
+The smaller the p-value, the more reads at the same genomic position are potentially allowed.
 Alternatively, all reads mapping to exactly the same genomic position can be maintained (uniq = 0) or replaced by only one representative (uniq = 1).
 
 

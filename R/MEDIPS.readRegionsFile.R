@@ -75,7 +75,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
    
     if(is.logical(uniq)){stop("Parameter 'uniq' is not logical anymore, please specify a p-value and see the MEDIPS vignette.")}
     if (uniq == 1) {
-		cat("Keep only one representative of stacked reads mapping to the same genomic location.\n", sep = "")
+		cat("Keep at most one 1 read mapping to the same genomic location.\n", sep = "")
 		regions_GRange = unique(regions_GRange)
 		cat("Number of remaining reads: ", length(regions_GRange), 
 			"\n", sep = "")
@@ -84,7 +84,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
 			sum(as.numeric(seqlengths(dataset)[chr.select])))
 		max_dup_number = max(1, max_dup_number)
 		cat("Keep at most ", max_dup_number, 
-			" reads mapping to the same genomic location\n", sep = "")
+			" read(s) mapping to the same genomic location\n", sep = "")
 		uniq_regions = unique(regions_GRange)
 		dup_number = countMatches(uniq_regions, regions_GRange)
 		dup_number[dup_number > max_dup_number] = max_dup_number
@@ -216,7 +216,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
 	if(is.logical(uniq)){stop("Parameter 'uniq' is not logical anymore, please specify a p-value and see the MEDIPS vignette.")}
 	
 	if (uniq == 1) {
-		cat("Keep only one representative of stacked reads mapping to the same genomic location.\n", sep = "")
+		cat("Keep at most 1 read mapping to the same genomic location.\n", sep = "")
 		regions_GRange = unique(regions_GRange)
 		cat("Number of remaining short reads: ", length(regions_GRange), 
 			"\n", sep = "")
@@ -225,7 +225,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
 			sum(as.numeric(seqlengths(dataset)[chr.select])))
 		max_dup_number = max(1, max_dup_number)
 		cat("Keep at most ", max_dup_number, 
-			" first mate reads mapping to the same genomic location\n", sep = "")		
+			" first mate read(s) mapping to the same genomic location\n", sep = "")		
 		uniq_regions = unique(regions_GRange)
 		dup_number = countMatches(uniq_regions, regions_GRange)
 		dup_number[dup_number > max_dup_number] = max_dup_number

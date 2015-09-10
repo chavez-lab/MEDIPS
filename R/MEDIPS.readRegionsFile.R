@@ -265,9 +265,9 @@ getMObjectFromWIG <- function(fileName, path, chr.select=NULL,BSgenome){
           cat("Select chromosomes",chr.select,"\n")
           sel=GRanges(chr.select,IRanges(1, 536870912))
 	  #this function will warn, if type is not bigwig
-	  wiggle=rtracklayer::import(paste(path,fileName,sep="/"), asRangedData=FALSE, which=sel)	
+	  wiggle=rtracklayer::import(paste(path,fileName,sep="/"), which=sel)	
 	}else{
-	  wiggle=rtracklayer::import(paste(path,fileName,sep="/"), asRangedData=FALSE)
+	  wiggle=rtracklayer::import(paste(path,fileName,sep="/"))
 	  chr.select=names(seqlengths(wiggle))
 	}
 	

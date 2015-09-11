@@ -15,12 +15,11 @@ MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=NULL
 		stop("summarize must be \"avg\", \"minP\" or NULL")
 	} 
 		
-	if(!is.null(columns))
+	if(!is.null(columns)){
 		column.ids = which(colnames(results) %in% columns)
-	else
+		}else{
 		column.ids = 4:dim(results)[2]
-
-	
+		}
 
 	##Convert results to GRange object
 	results.GRange = GRanges(seqnames=results[,1], ranges=IRanges(start=as.numeric(results[,2]), end=as.numeric(results[,3])))		
@@ -55,7 +54,7 @@ MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=NULL
 		g = unique(m[,1])
 		base = data.frame(chr=as.character(as.vector(seqnames(rois.Grange[g]))), start=start(rois.Grange[g]), end=end(rois.Grange[g]), stringsAsFactors=F)
 		ids = rois.Grange$ids[g]
-		if(dim(base[1,])[1]==1){
+		if(dim(base)[1]==1){
 			avgROI=data.frame(c(base, mean.rois.data))
 		}else{avgROI=cbind(base, mean.rois.data)}
 		avgROI$ROI=ids		

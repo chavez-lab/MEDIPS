@@ -13,7 +13,7 @@ The final enrichment values result by dividing the relative frequency of CpGs (o
 the relative frequency of CpGs (or the observed/expected value, respectively) of the reference genome.
 }
 \usage{
-MEDIPS.CpGenrich(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F)
+MEDIPS.CpGenrich(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F, bwa = FALSE)
 }
 \arguments{
    \item{file}{

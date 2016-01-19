@@ -7,12 +7,12 @@ Funtion to fetch annotations from biomaRt.
 The function receives predifined annotations from ensembl biomaRt for subsequent annotation of a result table.
 }
 \usage{
-MEDIPS.getAnnotation(host="www.biomart.org",dataset=c("hsapiens_gene_ensembl","mmusculus_gene_ensembl")[1],annotation=c("TSS","EXON","GENE")[1],tssSz=c(-1000,500),chr=NULL)
+MEDIPS.getAnnotation(host="www.ensembl.org",dataset=c("hsapiens_gene_ensembl","mmusculus_gene_ensembl")[1],annotation=c("TSS","EXON","GENE")[1],tssSz=c(-1000,500),chr=NULL)
 }
 \arguments{
   \item{host}{
 BioMart database host you want to connect to.
-For current ensembl version, use "www.biomart.org". For other versions, set to the respective archive host, e.g. "may2012.archive.ensembl.org" for Ensembl 67
+For current ensembl version, use "www.ensembl.org". For other versions, set to the respective archive host, e.g. "may2012.archive.ensembl.org" for Ensembl 67
 Please ensure that the ensembl version is compatible to the used genome version. 
 }
   \item{dataset}{

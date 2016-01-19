@@ -5,19 +5,17 @@
 ##Param:	mart, dataset. annotation
 ##Output:	List of annotation matrix 
 ##Requires:	biomaRt
-##Modified:	11/22/2011
-##Author:	Joern Dietrich
-MEDIPS.getAnnotation<-function(host="www.biomart.org",dataset=c("hsapiens_gene_ensembl","mmusculus_gene_ensembl")[1],annotation=c("TSS","EXON","GENE")[1],tssSz=c(-1000,500),chr=NULL){
+##Modified:	01/19/2016
+##Author:	Joern Dietrich, Matthias Lienhard, Lukas Chavez
+MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_ensembl","mmusculus_gene_ensembl")[1],annotation=c("TSS","EXON","GENE")[1],tssSz=c(-1000,500),chr=NULL){
+
 	marts=biomaRt::listMarts(host=host)
-	mart="ensembl"
-	if(host!="www.biomart.org"){
-		mart="ENSEMBL_MART_ENSEMBL"
-	}
+	mart="ENSEMBL_MART_ENSEMBL"
 	if(mart%in%marts[,1])
 		cat("Getting annotation from database",as.character(marts[marts[,1]==mart,2]),"\n" )
 	else
 		stop(paste("cannot find mart \"",mart,"\" at ",host,sep=""))		
-	biomart <- biomaRt::useMart(mart,host=host)
+	biomart <- biomaRt::useMart(mart, dataset=dataset, host=host)
 	dSets=biomaRt::listDatasets(biomart)
 	if(dataset%in%dSets[,1])
 		cat("Selecting dataset",as.character(dSets[dSets[,1]==dataset,2]),"\n" )

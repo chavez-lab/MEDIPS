@@ -11,8 +11,8 @@
 
 MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=NULL){
 	
-	if (! (is.null(summarize) || summarize=="avg" || summarize=="minP")){
-		stop("summarize must be \"avg\", \"minP\" or NULL")
+	if (! (is.null(summarize) || summarize=="avg" || summarize=="minP" || summarize=="sum")){
+		stop("summarize must be \"avg\", \"minP\", \"sum\" or NULL")
 	} 
 		
 	if(!is.null(columns)){
@@ -59,6 +59,24 @@ MEDIPS.selectROIs=function(results=NULL, rois=NULL, columns=NULL, summarize=NULL
 		}else{avgROI=cbind(base, mean.rois.data)}
 		avgROI$ROI=ids		
 		return(avgROI)
+	}else if(summarize=="sum"){
+                ##For each roi, select according result frames and
+                ##calculate sum for all specified columns
+                ###################################################
+                m=IRanges::as.matrix(findOverlaps(rois.Grange, results.GRange))
+                mean.rois.data=apply(IRanges::as.data.frame(values(results.GRange)),2,function(x){
+                        l=split(x[m[,2]],m[,1])
+                        return(unlist(lapply(l,sum)))
+                })
+                ##Convert Grange rois result object to base
+                g = unique(m[,1])
+                base = data.frame(chr=as.character(as.vector(seqnames(rois.Grange[g]))), start=start(rois.Grange[g]), end=end(rois.Grange[g]), stringsAsFactors=F)
+                ids = rois.Grange$ids[g]
+                if(dim(base)[1]==1){
+                        avgROI=data.frame(c(base, mean.rois.data))
+                }else{avgROI=cbind(base, mean.rois.data)}
+                avgROI$ROI=ids
+                return(avgROI)
 	}else if(summarize =="minP"){
 		#find ROIs in data
 		m=IRanges::as.matrix(findOverlaps(rois.Grange, results.GRange))

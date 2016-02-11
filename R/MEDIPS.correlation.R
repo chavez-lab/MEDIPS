@@ -4,10 +4,10 @@
 ##########################################################################
 ##Input:	List of MEDIPS SETs
 ##Output:	correlation matrix
-##Modified:	04/20/2012
+##Modified:	02/11/2016
 ##Author:	Lukas Chavez
 
-MEDIPS.correlation <- function(MSets=NULL, plot=T, method="pearson"){
+MEDIPS.correlation <- function(MSets=NULL, plot=T, method="spearman"){
 	
 	n=length(MSets)
 

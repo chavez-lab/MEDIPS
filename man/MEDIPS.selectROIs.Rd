@@ -22,7 +22,7 @@ It is possible to specify one or more concrete column names, please see an examp
 }
 \item{summarize}{
 By setting summarize=NULL (default) all windows included in the genomic ranges of the given ROIs will be returned.
-As an alternative, it is possible to calculate mean values over the individual windows included in each ROI (summarize = "avg"),
+As an alternative, it is possible to calculate mean (summarize = "avg") or sum (summarize = "sum") values over the individual windows included in each ROI,
 or to select only the most significant window within each given ROI (summarize="minP").
 }
 }

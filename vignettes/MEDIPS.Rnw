@@ -296,7 +296,7 @@ This parameter is ignored in case the \Biocpkg{edgeR} method. \Biocpkg{edgeR} wi
 \item
 \texttt{minRowSum}: threshold for a minimum sum of counts across all samples per window (default=10). Windows with lower coverage will not be tested for differential coverage.
 \item
-\texttt{quantile}: DNA enrichment assays may have different efficencies. To normalize for this effect, quantile normalization can be enabled by setting this parameter to TRUE (default=FALSE). It has been proposed \cite{Seumois} that quantile normalization can correct for varying DNA enrichment efficiencies. When enabled, quantile normalization will be applied to the count table (including all genomic windows and all samples) prior to testing for differential coverage between conditions. 
+\texttt{quantile}: DNA enrichment assays may have different efficencies. To normalize for this effect, quantile normalization can be enabled by setting this parameter to TRUE (default=FALSE). It has been proposed \cite{Seumois} that quantile normalization can correct for varying DNA enrichment efficiencies. When enabled, quantile normalization will be applied to the count table (including all genomic windows and all samples) prior to testing for differential coverage between conditions. No other library size normalisation (i.e. TMM) will be performed. 
 \warning{The counts - but not rpkm and rms values - of the returned result table will be quantile normalized. If quantile normalization has been enabled, the results of the differential coverage analysis (fold change, p-values etc.) are based on quantile normalized count data.} 
 \end{itemize} 
 

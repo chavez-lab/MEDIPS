@@ -296,8 +296,8 @@ This parameter is ignored in case the \Biocpkg{edgeR} method. \Biocpkg{edgeR} wi
 \item
 \texttt{minRowSum}: threshold for a minimum sum of counts across all samples per window (default=10). Windows with lower coverage will not be tested for differential coverage.
 \item
-\texttt{quantile}: DNA enrichment assays may have different efficencies. To normalize for this effect, quantile normalization can be enabled by setting this parameter to TRUE (default=FALSE). It has been proposed \cite{Seumois} that quantile normalization can correct for varying DNA enrichment efficiencies. When enabled, quantile normalization will be applied to the count table (including all genomic windows and all samples) prior to testing for differential coverage between conditions. No other library size normalisation (i.e. TMM) will be performed. 
-\warning{The counts - but not rpkm and rms values - of the returned result table will be quantile normalized. If quantile normalization has been enabled, the results of the differential coverage analysis (fold change, p-values etc.) are based on quantile normalized count data.} 
+\texttt{diffnorm}: To normalize for different library sizes and/or for different enrichment efficiencies, normalization can be enabled by setting this parameter to tmm, quantile, rpkm or rms (or none). If differential enrichment between conditions is calcualted based on edgeR (diff.method=edgeR), tmm (default) or quantile (or none) are possible, while rpkm and rms are only available when diff.method=ttest. It has been proposed \cite{Seumois} that quantile normalization can correct for varying DNA enrichment efficiencies. When enabled, quantile normalization will be applied to the count table (including all genomic windows and all samples) prior to testing for differential coverage between conditions. 
+\warning{In case of quantile normalisation, the counts - but not rpkm and rms values - of the returned result table will be quantile normalized.} 
 \end{itemize} 
 
 The returned object (here \texttt{mr.edgeR}) is a list of vectors (all of the same length) where the rows correspond to genome wide windows (i.e. the result table). 

@@ -4,7 +4,7 @@
 ##calculates CNV scores between groups of INPUT SETs (if provided)
 ##########################################################################
 ##Input:	Groups of MEDIPS and INPUT SETs
-##Param:	MSet1, MSet2, CSet, ISet1, ISet2, chr, p.adj, diff.method, type, minRowSum, quantile
+##Param:	MSet1, MSet2, CSet, ISet1, ISet2, chr, p.adj, diff.method, minRowSum, norm
 ##Output:	Result table
 ##Requires:	DNAcopy
 ##Modified:	04/02/2015
@@ -21,9 +21,8 @@ MEDIPS.meth = function(
 		diff.method="edgeR", 
 		CNV=FALSE,
 		MeDIP=FALSE,
-		type="rpkm",
 		minRowSum=10,
-		quantile=FALSE
+		diffnorm="tmm"
 		)
 {
 	nMSets1 = length(MSet1)	
@@ -229,6 +228,11 @@ MEDIPS.meth = function(
 		}		
 		
 		if(diff.method=="edgeR"){
+			
+			if(diffnorm=="rpkm" | diffnorm=="rms"){
+				stop("rpkm and rms normalization are not available for the edgeR mode. Here, differential enrichment is performed on the count data. Please set diffnorm to tmm or quantile.\n")
+			}
+			
 			##Extract number of reads per sample
 			if(!is.null(MSet1)){
 				n.r.M1 = NULL
@@ -244,7 +248,7 @@ MEDIPS.meth = function(
 			}	
 
 			#Quantile normalization
-			if(quantile){
+			if(diffnorm=="quantile"){
 				cat("Performing quantile normalization on sequencing counts. Please note, the returned counts - but not the returned rpkm values - will be quantile normalized.\n")
 				counts.medip.coln = colnames(counts.medip)				
 				counts.medip = preprocessCore::normalize.quantiles(as.matrix(counts.medip), copy=FALSE)	
@@ -252,27 +256,27 @@ MEDIPS.meth = function(
 				colnames(counts.medip) = counts.medip.coln
 			}
 		
-			diff.results.list = MEDIPS.diffMeth(base=base, values=counts.medip, diff.method="edgeR", nMSets1=nMSets1, nMSets2=nMSets2, p.adj=p.adj, n.r.M1=n.r.M1, n.r.M2=n.r.M2, MeDIP=MeDIP, minRowSum=minRowSum, quantile=quantile)
+			diff.results.list = MEDIPS.diffMeth(base=base, values=counts.medip, diff.method="edgeR", nMSets1=nMSets1, nMSets2=nMSets2, p.adj=p.adj, n.r.M1=n.r.M1, n.r.M2=n.r.M2, MeDIP=MeDIP, minRowSum=minRowSum, diffnorm=diffnorm)
 		}
 		else if(diff.method=="ttest"){
 
-			if(quantile){
-				stop("Quantile normalization not available for the t-test mode. Please chose edgeR or disable quantile normalization.\n")
+			if(diffnorm=="quantile" | diffnorm=="tmm"){
+				stop("Quantile and TMM normalization are not available for the t-test mode. Please chose edgeR or set diffnorm to rpkm or rms.\n")
 			}
 
-			if(type=="rpkm"){
+			if(diffnorm=="rpkm"){
 				diff.results.list = MEDIPS.diffMeth(base=base, values=rpkm.medip, diff.method="ttest", nMSets1=nMSets1, nMSets2=nMSets2, p.adj=p.adj, MeDIP=MeDIP, minRowSum=minRowSum)
 			}
-			else if(type=="rms"){
+			else if(diffnorm=="rms"){
 				if(MeDIP){
 					diff.results.list = MEDIPS.diffMeth(base=base, values=rms, diff.method="ttest", nMSets1=nMSets1, nMSets2=nMSets2, p.adj=p.adj, MeDIP=MeDIP, minRowSum=minRowSum)
 				}
 				else{
-					stop("Invalid specification for parameter type because parameter MeDIP is FALSE (no rms values have been calculated).")
+					stop("Invalid specification for parameter diffnorm because parameter MeDIP is FALSE (no rms values have been calculated).")
 				}
 			}
 			else{
-				stop("Unknown specification for parameter type.")
+				stop("Unknown specification for parameter diffnorm.")
 			}
 		}
 		else{stop("Selected method for calculating differential coverage not supported")}

@@ -8,7 +8,7 @@
 ##Modified:	1/9/2015
 ##Author:	Lukas Chavez, Joern Dietrich
 
-MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets1=NULL, nMSets2=NULL, n.r.M1=n.r.M1, n.r.M2=n.r.M2, p.adj="bonferroni", MeDIP, minRowSum=10, quantile=FALSE)
+MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets1=NULL, nMSets2=NULL, n.r.M1=n.r.M1, n.r.M2=n.r.M2, p.adj="bonferroni", MeDIP, minRowSum=10, diffnorm="tmm")
 {
 	##edgeR##
 	#########
@@ -33,13 +33,17 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 		#d <- edgeR::DGEList(counts = values[filter,], group = edRObj.group, lib.size=edRObj.length)
 		d <- edgeR::DGEList(counts = values[filter,], group = edRObj.group)
 
-		if(!quantile){
+		if(diffnorm=="tmm"){
 			cat("Apply trimmed mean of M-values (TMM) for library sizes normalization...\n")	
 			d=edgeR::calcNormFactors(d)
 		}
-		else{
-			cat("Skipping trimmed mean of M-values (TMM) library size normalization due to enabled quantile normalisation...\n")	
+		if(diffnorm=="quantile" | diffnorm=="none"){
+			cat("Skipping trimmed mean of M-values (TMM) library size normalization...\n")	
+			d=edgeR::calcNormFactors(d, method="none")
 		}
+	    if(diffnorm!="tmm" & diffnorm!="quantile" & diffnorm!="none"){
+	    	stop("diffnorm method unknown.")
+	    }
 
 		if(nMSets1!=1 | nMSets2!=1){
 			cat("Estimating common dispersion...\n")			

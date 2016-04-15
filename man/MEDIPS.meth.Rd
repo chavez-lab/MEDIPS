@@ -15,7 +15,7 @@ the function will calculate copy number variation.
 The function allows for processing a variable number of provided MEDIPS SETs and therefore, the returned matrix is of variable length.
 }
 \usage{
-MEDIPS.meth(MSet1 = NULL, MSet2 = NULL, CSet = NULL, ISet1 = NULL, ISet2 = NULL, chr = NULL, p.adj="bonferroni", diff.method="edgeR", CNV=FALSE, MeDIP=FALSE, type="rpkm",minRowSum=10, quantile=FALSE)
+MEDIPS.meth(MSet1 = NULL, MSet2 = NULL, CSet = NULL, ISet1 = NULL, ISet2 = NULL, chr = NULL, p.adj="bonferroni", diff.method="edgeR", CNV=FALSE, MeDIP=FALSE, minRowSum=10, diffnorm="tmm")
 }
 \arguments{
   \item{MSet1}{
@@ -52,15 +52,11 @@ Please note, there is the function MEDIPS.addCNV which allows to run the CNV ana
   \item{MeDIP}{
 This parameter determines, whether for the MEDIPS SETs given at the slots MSet1 and MSet2, CpG density dependent normalization values (rms and prob) will be calculated (default: MeDIP=TRUE).  
 }
-  \item{type}{
-In case diff.method has been set to ttest, this parameter specifies, if differential coverage is calculated based on the rpkm (default) or rms values.
-This parameter is ignored in case the edgeR method is selected as the underlying model requires count data.
-}
   \item{minRowSum}{
 threshold for the sum of counts in a window for the staistical test (default=10). 
 }
-   \item{quantile}{
-This parameter enables quantile normalization on the count matrix prior to calculating differential coverage (default=FALSE).
+   \item{diffnorm}{
+This parameter defines which normalisation method is applied prior to testing for differential enrichment between conditions (default='tmm'). tmm, quantile and none are possible when diff.method=edgeR while rpkm and rms are possible when diff.method=ttest.
 }
 }
 
@@ -105,7 +101,7 @@ data(hESCs_Input)
 data(DE_Input)
 data(CS)
 
-resultTable = MEDIPS.meth(MSet1 = hESCs_MeDIP, MSet2 = DE_MeDIP, CSet = CS, ISet1 = hESCs_Input, ISet2 = DE_Input, chr = "chr22", p.adj="bonferroni", diff.method="ttest", CNV=FALSE, MeDIP=FALSE)
+resultTable = MEDIPS.meth(MSet1 = hESCs_MeDIP, MSet2 = DE_MeDIP, CSet = CS, ISet1 = hESCs_Input, ISet2 = DE_Input, chr = "chr22", p.adj="bonferroni", diff.method="edgeR", CNV=FALSE, MeDIP=FALSE, diffnorm="tmm")
 }
 
 

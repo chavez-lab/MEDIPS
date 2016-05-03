@@ -1,7 +1,7 @@
 Package: MEDIPS
 Type: Package
 Title: DNA IP-seq data analysis
-Version: 1.22.0
+Version: 1.23.0
 Date: 2016-04-15
 Author: Lukas Chavez, Matthias Lienhard, Joern Dietrich, Isaac Lopez Moyado
 Maintainer: Lukas Chavez <l.chavez@dkfz.de>

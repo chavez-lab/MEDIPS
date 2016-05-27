@@ -45,6 +45,6 @@ Joern Dietrich and Matthias Lienhard
 #annotation_hs = MEDIPS.getAnnotation(dataset="hsapiens_gene_ensembl", annotation="TSS", chr=c("chr22"),tssSz=c(-1000,500))
 
 #mus musculus, ensembl version 58 (mm9)
-annotation_mm9 = MEDIPS.getAnnotation(host="may2010.archive.ensembl.org",dataset="mmusculus_gene_ensembl", annotation="TSS", chr=c("chr19"))
+#annotation_mm9 = MEDIPS.getAnnotation(host="may2010.archive.ensembl.org",dataset="mmusculus_gene_ensembl", annotation="TSS", chr=c("chr19"))
 
 }

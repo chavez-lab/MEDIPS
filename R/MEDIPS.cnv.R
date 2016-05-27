@@ -79,7 +79,7 @@ MEDIPS.addCNV<-function(ISet1, ISet2, results, cnv.Frame=1000){
 		cnv.rpkm.input = cbind(cnv.rpkm.input, ((genome_count(tmp.cnv)*10^9)/(cnv.Frame*number_regions(tmp.cnv))))	
 	}
 	
-	for(i in nISets2){
+	for(i in 1:nISets2){
 		file=paste(path_name(ISet2[[i]]),sample_name(ISet2[[i]]),sep="/");
 		tmp.cnv = MEDIPS.createSet(file=file, 
 				BSgenome=genome_name(ISet2[[i]]),

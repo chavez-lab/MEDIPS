@@ -38,7 +38,7 @@ data(resultTable)
 
 sig = MEDIPS.selectSig(results=resultTable, p.value=0.05, adj=TRUE, ratio=NULL, bg.counts=NULL, CNV=FALSE)
 sig = MEDIPS.mergeFrames(frames=sig, distance=1)
-ens_gene = MEDIPS.getAnnotation( annotation="GENE",chr="chr22")
-sig = MEDIPS.setAnnotation(regions=sig, annotation=ens_gene)
+#ens_gene = MEDIPS.getAnnotation( annotation="GENE",chr="chr22")
+#sig = MEDIPS.setAnnotation(regions=sig, annotation=ens_gene)
 
 }

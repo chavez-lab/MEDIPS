@@ -11,7 +11,7 @@
 MEDIPS.createSet <-
 function (file = NULL, extend = 0, shift = 0, window_size = 300, 
     BSgenome = NULL, uniq = 1e-3, chr.select = NULL, paired = F, 
-    sample_name = NULL, bwa = FALSE) 
+    sample_name = NULL, isSecondaryAlignment = FALSE, simpleCigar=TRUE) 
 {
     if (is.null(BSgenome)) {
         stop("Must specify a BSgenome library.")
@@ -56,11 +56,11 @@ function (file = NULL, extend = 0, shift = 0, window_size = 300,
     else {
         if (!paired) {
             GRange.Reads = getGRange(fileName, path, extend, 
-                shift, chr.select, dataset, uniq)
+                shift, chr.select, dataset, uniq, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)
         }
         else {
             GRange.Reads = getPairedGRange(fileName, path, extend, 
-                shift, chr.select, dataset, uniq, bwa = bwa)
+                shift, chr.select, dataset, uniq, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)
         }
         chr_lengths = as.numeric(seqlengths(dataset)[chr.select])
         no_chr_windows = ceiling(chr_lengths/window_size)

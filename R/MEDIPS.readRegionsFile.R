@@ -5,19 +5,19 @@
 ##Param:	allignment.file, path, extend, shift, uniq, dataset
 ##Output:	Granges object
 ##Requires:	GenomicRanges
-##Modified:	11/10/2011
+##Modified:	06/24/2016
 ##Author:	Lukas Chavez, Joern Dietrich, Isaac Lopez Moyado 
 
 getGRange <-
 function (fileName, path = NULL, extend, shift, chr.select = NULL, 
-    dataset = NULL, uniq = 1e-3, ROI = NULL) 
+    dataset = NULL, uniq = 1e-3, ROI = NULL, isSecondaryAlignment = FALSE, simpleCigar=TRUE) 
 {
     ext = substr(fileName, nchar(fileName) - 3, nchar(fileName))
     bam = (ext == ".bam" | ext == ".BAM")
     bamindex = bam & file.exists(paste(path, "/", fileName, ".bai", 
         sep = ""))
     if (bam) {
-        scanFlag = scanBamFlag(isUnmappedQuery = F)
+        scanFlag = scanBamFlag(isUnmappedQuery = FALSE, isSecondaryAlignment = isSecondaryAlignment)
         if (bamindex & (!is.null(chr.select) | !is.null(ROI))) {
             if (!is.null(ROI)) {
                 cat("Reading bam alignment", fileName, "\n considering ROIs using bam index\n")
@@ -36,13 +36,13 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
                   chr.select, " using bam index\n")
                 sel = GRanges(chr.select, IRanges(1, 536870912))
             }
-            scanParam = ScanBamParam(flag = scanFlag, what = c("rname", 
-                "pos", "strand", "qwidth"), which = sel)
+            scanParam = ScanBamParam(flag = scanFlag, simpleCigar= simpleCigar, what = c("rname", 
+                "pos", "strand", "qwidth", "isize", "mpos"), which = sel)
         }
         else {
             cat("Reading bam alignment", fileName, "\n")
-            scanParam = ScanBamParam(flag = scanFlag, what = c("rname", 
-                "pos", "strand", "qwidth"))
+            scanParam = ScanBamParam(flag = scanFlag, simpleCigar= simpleCigar, what = c("rname", 
+                "pos", "strand", "qwidth", "isize", "mpos"))
         }
         regions = scanBam(file = paste(path, fileName, sep = "/"), 
             param = scanParam)
@@ -102,11 +102,8 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
 
 getPairedGRange <-
 function (fileName, path = NULL, extend, shift, chr.select = NULL, 
-    dataset = NULL, uniq = 1e-3, ROI = NULL, bwa = FALSE) 
+    dataset = NULL, uniq = 1e-3, ROI = NULL, isSecondaryAlignment = FALSE, simpleCigar=TRUE) 
 {
-    if (bwa) {
-        cat("Warning: processing of bwa alignment files for paired-end sequencing data is still under development.\n")
-    }
     ext = substr(fileName, nchar(fileName) - 3, nchar(fileName))
     bam = (ext == ".bam" | ext == ".BAM")
     bamindex = bam & file.exists(paste(path, "/", fileName, ".bai", 
@@ -114,7 +111,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
     if (bam) {
         scanFlag = scanBamFlag(isPaired = T, isProperPair = TRUE, 
             hasUnmappedMate = FALSE, isUnmappedQuery = F, isFirstMateRead = T, 
-            isSecondMateRead = F)
+            isSecondMateRead = F, isSecondaryAlignment = isSecondaryAlignment)
         if (bamindex & (!is.null(chr.select) | !is.null(ROI))) {
             if (!is.null(ROI)) {
                 cat("Reading bam alignment", fileName, "\n considering ROIs using bam index\n")
@@ -134,27 +131,15 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
                   chr.select, " using bam index\n")
                 sel = GRanges(chr.select, IRanges(1, 536870912))
             }
-            if (bwa) {
-                scanParam = ScanBamParam(flag = scanFlag, what = c("rname", 
-                  "pos", "strand", "qwidth", "isize", "mpos"), 
-                  which = sel)
-            }
-            else {
-                scanParam = ScanBamParam(flag = scanFlag, what = c("rname", 
-                  "pos", "strand", "qwidth", "isize"), which = sel)
-            }
+        scanParam = ScanBamParam(flag = scanFlag, simpleCigar= simpleCigar, what = c("rname", 
+		    "pos", "strand", "qwidth", "isize", "mpos"), which = sel)    
         }
         else {
             cat("Reading bam alignment", fileName, "\n")
-            if (bwa) {
-                scanParam = ScanBamParam(flag = scanFlag, what = c("rname", 
+            scanParam = ScanBamParam(flag = scanFlag, simpleCigar = simpleCigar, what = c("rname", 
                   "pos", "strand", "qwidth", "isize", "mpos"))
-            }
-            else {
-                scanParam = ScanBamParam(flag = scanFlag, what = c("rname", 
-                  "pos", "strand", "qwidth", "isize"))
-            }
         }
+   
         regions = scanBam(file = paste(path, fileName, sep = "/"), 
             param = scanParam)
         regions = do.call(rbind, lapply(regions, as.data.frame, 
@@ -181,34 +166,20 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
         sep = "")
     cat("Min insertion size: ", min(abs(regions$isize)), " nt\n", 
         sep = "")
-    if (bwa) {
-        cat("Paired-end alignment (BAM) files generated by bwa are processed in a different way compared to BAM files generated by bowtie, because in the bwa output the first mate can be either the 'left' or the 'right' mate regardless of their alignment to the plus or the minus strand.\n")
-        qwidth = regions[, "qwidth"]
-        regions = data.frame(chr = as.character(as.vector(regions$rname)), 
-            start = as.numeric(as.vector(regions$pos)), stop = as.numeric(as.vector(regions$mpos)), 
-            strand = as.character(as.vector(regions$strand)), 
-            isize = as.numeric(as.vector(regions$isize)), stringsAsFactors = F)
-        regionsToRev = regions$start > regions$stop
-        tmp = regions[regionsToRev, ]$start
-        regions[regionsToRev, ]$start = regions[regionsToRev, 
-            ]$stop
-        regions[regionsToRev, ]$stop = tmp
-        regions[, "stop"] = regions[, "stop"] + qwidth - 1 + 
-            extend
-    }
-    else {
-        regions = data.frame(chr = as.character(as.vector(regions$rname)), 
-            start = as.numeric(as.vector(regions$pos)), stop = as.numeric(as.vector(regions$pos) + 
-                as.vector(regions$qwidth) - 1), strand = as.character(as.vector(regions$strand)), 
-            isize = as.numeric(as.vector(regions$isize)), stringsAsFactors = F)
-        plus = regions$strand == "+"
-        regions[plus, "stop"] = regions[plus, "start"] + regions[plus, 
-            "isize"] + extend
-        regions[!plus, "start"] = regions[!plus, "stop"] + regions[!plus, 
-            "isize"] - extend
-    }
-    regions[, "stop"] = regions[, "stop"] + shift
-    regions[, "start"] = regions[, "start"] + shift
+   
+   qwidth = regions[, "qwidth"]
+   regions = data.frame(chr = as.character(as.vector(regions$rname)), 
+   start = as.numeric(as.vector(regions$pos)), stop = as.numeric(as.vector(regions$mpos)), 
+   strand = as.character(as.vector(regions$strand)), 
+   isize = as.numeric(as.vector(regions$isize)), stringsAsFactors = F)
+   
+   regionsToRev = regions$start > regions$stop
+   regions[regionsToRev, ]$start = regions[regionsToRev,]$stop
+   regions[, "stop"] = regions[, "start"] + abs(regions[, "isize"]) - 1    
+   
+   if(extend!=0){cat("The extend parameter will be neglected, because the actual DNA fragment length is known in paired-end data.\n")}
+   if(shift!=0){cat("The shift parameter will be neglected, because the actual DNA fragment position is known in paired-end data.\n")}
+    
     cat("Creating GRange Object...\n")
     regions_GRange = GRanges(seqnames = regions$chr, ranges = IRanges(start = regions$start, 
         end = regions$stop), strand = regions$strand)

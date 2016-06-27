@@ -10,7 +10,7 @@
 ##Author:	Joern Dietrich, Lukas Chavez
 
 
-MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F, bwa = FALSE){
+MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e-3, chr.select=NULL, paired=F){
 
 	## Proof correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}
@@ -24,7 +24,7 @@ MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e
 	dataset = get(ls(paste("package:", BSgenome, sep = "")))	
 
 	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, dataset, uniq)}
-	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, dataset, uniq, bwa=bwa)}
+	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, dataset, uniq)}
 	
 	## Sort chromosomes
 	if(length(unique(seqlevels(GRange.Reads)))>1){chromosomes=mixedsort(unique(seqlevels(GRange.Reads)))}

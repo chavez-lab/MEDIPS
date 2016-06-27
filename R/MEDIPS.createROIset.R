@@ -8,7 +8,7 @@
 ##Modified:	11/01/2015
 ##Author:	Lukas Chavez
 
-MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BSgenome=NULL, uniq=1e-3, chr.select=NULL, paired=F, sample_name=NULL, bwa=FALSE){
+MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BSgenome=NULL, uniq=1e-3, chr.select=NULL, paired=F, sample_name=NULL, isSecondaryAlignment = FALSE, simpleCigar=TRUE){
 			
 	## Proof of correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}
@@ -51,8 +51,8 @@ MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BS
 	## Sort chromosomes
         if(length(chromosomes)>1){chromosomes=mixedsort(chromosomes)}
 	
-	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chromosomes, dataset, uniq, ROI=ROI)}
-	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chromosomes, dataset, uniq, ROI=ROI, bwa=bwa)}
+	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chromosomes, dataset, uniq, ROI=ROI, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)}
+	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chromosomes, dataset, uniq, ROI=ROI, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)}
 				
 	## Get chromosome lengths for all chromosomes within data set.
 	cat(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))		

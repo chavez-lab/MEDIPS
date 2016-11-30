@@ -11,7 +11,7 @@
 
 
 MEDIPS.saturation<-
-function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired=F){
+function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired=F, isSecondaryAlignment = FALSE, simpleCigar=TRUE){
 	
 	## Proof of correctness....
 	if(is.null(BSgenome)){stop("Must specify a BSgenome library.")}
@@ -24,8 +24,8 @@ function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, 
 	if(!fileName%in%dir(path)){stop(paste("File", fileName, " not found in", path, sep =" "))}
 	
 	dataset=get(ls(paste("package:", BSgenome, sep="")))
-	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, dataset, uniq)}
-	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, dataset, uniq)}
+	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, dataset, uniq, ROI = NULL, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)}
+	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, dataset, uniq, ROI = NULL, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)}
 
 	## Sort chromosomes
 	if(length(unique(seqlevels(GRange.Reads)))>1){chromosomes=mixedsort(unique(seqlevels(GRange.Reads)))}

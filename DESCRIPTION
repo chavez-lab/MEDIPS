@@ -1,8 +1,8 @@
 Package: MEDIPS
 Type: Package
 Title: DNA IP-seq data analysis
-Version: 1.25.0
-Date: 2016-08-26
+Version: 1.26.1
+Date: 2016-11-30
 Author: Lukas Chavez, Matthias Lienhard, Joern Dietrich, Isaac Lopez Moyado
 Maintainer: Lukas Chavez <l.chavez@dkfz.de>
 Description: MEDIPS was developed for analyzing data derived from
@@ -14,10 +14,13 @@ Description: MEDIPS was developed for analyzing data derived from
 License: GPL (>=2)
 LazyLoad: yes
 Depends: R (>= 3.0), BSgenome, Rsamtools
-Imports: GenomicRanges, Biostrings, graphics, gtools, IRanges,
-        methods, stats, utils, edgeR,
-        DNAcopy, biomaRt, rtracklayer, preprocessCore
+Imports: GenomicRanges, Biostrings, graphics, gtools, IRanges, methods,
+        stats, utils, edgeR, DNAcopy, biomaRt, rtracklayer,
+        preprocessCore
 Suggests: BSgenome.Hsapiens.UCSC.hg19, MEDIPSData, BiocStyle
-biocViews: DNAMethylation, CpGIsland,
-        DifferentialExpression, Sequencing, ChIPSeq, Preprocessing,
-        QualityControl, Visualization, Microarray, Genetics, Coverage, GenomeAnnotation, CopyNumberVariation, SequenceMatching
+biocViews: DNAMethylation, CpGIsland, DifferentialExpression,
+        Sequencing, ChIPSeq, Preprocessing, QualityControl,
+        Visualization, Microarray, Genetics, Coverage,
+        GenomeAnnotation, CopyNumberVariation, SequenceMatching
+NeedsCompilation: no
+Packaged: 2016-11-30 11:57:23 UTC; chavez

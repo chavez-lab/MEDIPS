@@ -9,7 +9,7 @@ The main idea is that an insufficent number of short reads will not result in a 
 Only if there is a sufficient number of short reads, the resulting genome wide coverage profile will be reproducible by another independent set of a similar number of short reads.
 }
 \usage{
-MEDIPS.saturation(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired = F)
+MEDIPS.saturation(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, extend=0, shift=0,  window_size=500, uniq=1e-3, chr.select=NULL, paired = F, isSecondaryAlignment = FALSE, simpleCigar=TRUE)
 }
 \arguments{
   \item{file}{
@@ -58,6 +58,12 @@ specify a subset of chromosomes for which the saturation analysis is performed.
 }
 \item{paired}{
 option for paired end reads
+}
+\item{isSecondaryAlignment}{
+option to import only primary alignments.
+}
+\item{simpleCigar}{
+option to import only alignments with simple Cigar string.
 }
 }
 \value{

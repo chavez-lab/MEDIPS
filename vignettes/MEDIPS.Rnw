@@ -64,7 +64,7 @@ To install the \Biocpkg{MEDIPS} package into your \R{} environment, start \R{} a
 
 <<echo=TRUE, eval=F>>=
 source("http://bioconductor.org/biocLite.R")
-biocLite("MEDIPS")
+BiocManager::install("MEDIPS")
 @
 
 Next, it is necessary to have a genome of interest available in your \R{} environment. 
@@ -83,7 +83,7 @@ Therefore, we download and install this genome build:
 
 <<echo=TRUE, eval=F>>=
 source("http://bioconductor.org/biocLite.R")
-biocLite("BSgenome.Hsapiens.UCSC.hg19")
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg19")
 @
 This takes some time, but has to be done only once for each reference genome.
 
@@ -91,7 +91,7 @@ Finally, the \Biocpkg{MEDIPS} workflow described below requires access to exampl
 
 <<echo=TRUE, eval=F>>=
 source("http://bioconductor.org/biocLite.R")
-biocLite("MEDIPSData")
+BiocManager::install("MEDIPSData")
 @
 
 

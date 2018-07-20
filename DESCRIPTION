@@ -1,10 +1,10 @@
 Package: MEDIPS
 Type: Package
 Title: DNA IP-seq data analysis
-Version: 1.33.0
-Date: 2016-11-30
+Version: 1.33.1
+Date: 2017-07-20
 Author: Lukas Chavez, Matthias Lienhard, Joern Dietrich, Isaac Lopez Moyado
-Maintainer: Lukas Chavez <l.chavez@dkfz.de>
+Maintainer: Lukas Chavez <lukaschavez@ucsd.edu>
 Description: MEDIPS was developed for analyzing data derived from
         methylated DNA immunoprecipitation (MeDIP) experiments followed
         by sequencing (MeDIP-seq). However, MEDIPS provides functionalities for the analysis of any kind of quantitative

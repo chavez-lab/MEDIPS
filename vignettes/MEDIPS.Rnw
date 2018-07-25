@@ -10,7 +10,7 @@ BiocStyle::latex()
 @
 
 \bioctitle[MEDIPS]{MEDIPS: genome-wide differential coverage analysis of sequencing data derived from DNA enrichment experiments.}
-\author{Lukas Chavez\footnote{l.chavez@dkfz.de}}
+\author{Lukas Chavez\footnote{lukaschavez@ucsd.edu}}
 
 \begin{document}
 

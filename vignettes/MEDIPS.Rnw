@@ -63,7 +63,8 @@ normalization of MeDIP-seq data with respect to local sequence pattern (e.g. CpG
 To install the \Biocpkg{MEDIPS} package into your \R{} environment, start \R{} and enter:
 
 <<echo=TRUE, eval=F>>=
-source("http://bioconductor.org/biocLite.R")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
 BiocManager::install("MEDIPS")
 @
 
@@ -82,7 +83,8 @@ In the given example, we mapped the short reads against the human genome build h
 Therefore, we download and install this genome build:
 
 <<echo=TRUE, eval=F>>=
-source("http://bioconductor.org/biocLite.R")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
 BiocManager::install("BSgenome.Hsapiens.UCSC.hg19")
 @
 This takes some time, but has to be done only once for each reference genome.
@@ -90,7 +92,8 @@ This takes some time, but has to be done only once for each reference genome.
 Finally, the \Biocpkg{MEDIPS} workflow described below requires access to example data available in the \Biocexptpkg{MEDIPSData} package which can be installed by typing:
 
 <<echo=TRUE, eval=F>>=
-source("http://bioconductor.org/biocLite.R")
+if (!requireNamespace("BiocManager", quietly=TRUE))
+    install.packages("BiocManager")
 BiocManager::install("MEDIPSData")
 @
 

@@ -30,15 +30,15 @@ function(file=NULL, BSgenome=NULL, pattern="CG", extend=0, shift=0, uniq=1e-3, c
 	if(length(unique(seqlevels(GRange.Reads)))==1){chromosomes=unique(seqlevels(GRange.Reads))}
 
 	## Get chromosome lengths for all chromosomes within data set.
-	message(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))
+	message("Loading chromosome lengths for ",BSgenome, "...", appendLF=T)
 	#chr_lengths=as.numeric(sapply(chromosomes, function(x){as.numeric(length(dataset[[x]]))}))
 	chr_lengths=as.numeric(seqlengths(dataset)[chromosomes])
 
 	## Get the genomic positions of the sequence pattern
-	message("Get genomic sequence pattern positions...\n")
+	message("Get genomic sequence pattern positions...", appendLF=T)
 	GRanges.pattern = MEDIPS.getPositions(BSgenome, pattern, chromosomes)
 
-	message("Calculating sequence pattern coverage...\n")
+	message("Calculating sequence pattern coverage...", appendLF=T)
 	overlap = countOverlaps(GRanges.pattern, GRange.Reads)
 	overlap_2 = countOverlaps(GRange.Reads, GRanges.pattern)
 	overlap_2 = length(overlap_2[overlap_2==0])

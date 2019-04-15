@@ -24,7 +24,7 @@ function(seqCoverageObj=NULL, main=NULL, type="pie", cov.level = c(0,1,2,3,4,5),
 
 	if(type=="pie"){
 
-		message("Creating summary...\n")
+		message("Creating summary...", appendLF=T)
 		results = NULL
 		for(i in 1:length(cov.level)){
 			if(i==1){

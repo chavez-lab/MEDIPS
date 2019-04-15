@@ -11,7 +11,7 @@
 MEDIPS.selectSig = function(results=NULL, p.value=0.01, adj=T, ratio=NULL, bg.counts=NULL, CNV=F){
 
 	if(is.null(results)){stop("Must specify a result table.")}
-	 message(paste("Total number of windows: ", nrow(results), "\n", sep=""))
+	 message("Total number of windows: ", nrow(results), appendLF=T)
 
 	##Background counts- preparation
         ################################
@@ -31,7 +31,7 @@ MEDIPS.selectSig = function(results=NULL, p.value=0.01, adj=T, ratio=NULL, bg.co
 	##Filter for windows tested for differential  methylation
 	##########################################################
 	results=results[!is.na(results[,grep("p.value", colnames(results))[1]]),]
-	message(paste("Number of windows tested for differential methylation: ", nrow(results), "\n", sep=""))
+	message("Number of windows tested for differential methylation: ", nrow(results), appendLF=T)
 
 
 	#Filter for p.values
@@ -41,8 +41,8 @@ MEDIPS.selectSig = function(results=NULL, p.value=0.01, adj=T, ratio=NULL, bg.co
 
 	results=results[results[,value_pvalue]<=p.value,]
 
-	if(adj){message(paste("Remaining number of windows with adjusted p.value<=", p.value, ": ", nrow(results), "\n", sep=""))}
-	else{message(paste("Remaining number of windows with p.value<=", p.value, ": ", nrow(results), "\n", sep=""))}
+	if(adj){message("Remaining number of windows with adjusted p.value<=", p.value, ": ", nrow(results), appendLF=T)}
+	else{message("Remaining number of windows with p.value<=", p.value, ": ", nrow(results), appendLF=T)}
 
 	##Ratio and CNV specific filter
 	##############################
@@ -55,7 +55,7 @@ MEDIPS.selectSig = function(results=NULL, p.value=0.01, adj=T, ratio=NULL, bg.co
 		}
 
 		results=results[results[,column_ratio]>=log2(ratio) | results[,column_ratio]<=(log2(1/ratio)),]
-		message(paste("Remaining number of windows with ratio >=",ratio," (or <=", round(1/ratio, digits=2), ", respectively): ", nrow(results), "\n", sep=""))
+		message("Remaining number of windows with ratio >=", ratio, " (or <=", round(1/ratio, digits=2), ", respectively): ", nrow(results), appendLF=T)
 	}
 	if(!is.null(ratio) & CNV==T){
 
@@ -73,7 +73,7 @@ MEDIPS.selectSig = function(results=NULL, p.value=0.01, adj=T, ratio=NULL, bg.co
 		}
 		results[is.na(results[,column_CNVratio]),column_CNVratio]=0
 		results=results[abs(results[,column_ratio]-results[,column_CNVratio])>=abs(log2(ratio)),]
-		message(paste("Remaining number of windows with CNV corrected ratio >=",ratio," (or <=", round(1/ratio, digits=2), ", respectively): ", nrow(results), "\n", sep=""))
+		message("Remaining number of windows with CNV corrected ratio >=",ratio," (or <=", round(1/ratio, digits=2), ", respectively): ", nrow(results), appendLF=T)
 	}
 	if(CNV==T & is.null(ratio)){
 		stop("Please specify a ratio when setting CNV=T.")
@@ -83,7 +83,7 @@ MEDIPS.selectSig = function(results=NULL, p.value=0.01, adj=T, ratio=NULL, bg.co
         ########################################
         if(!is.null(bg.counts)){
                 results=results[results$MSets1.counts.mean>=bg.t | results$MSets2.counts.mean>=bg.t,]
-                message(paste("Remaining number of windows where the mean count of at least one group is >=", round(bg.t, digits=2), ": ", nrow(results),"\n", sep=""))
+                message("Remaining number of windows where the mean count of at least one group is >=", round(bg.t, digits=2), ": ", nrow(results), appendLF=T)
         }
 
 	gc()

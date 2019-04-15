@@ -83,7 +83,7 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 	##Check, if a subset of chromosomes has been selected
 	######################################################
 	if(plot_chr!="all" & (class(MSet)=="MEDIPSset" | class(ISet)=="MEDIPSset")){
-		message(paste("Extracting data for",plot_chr, "...\n", sep=" "))
+		message("Extracting data for ", plot_chr, " ...", appendLF=T)
 
 		##Calculate genomic coordinates
 		##################################
@@ -94,12 +94,12 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 		if(length(genome_chr[genome_chr==plot_chr])==0){stop("Stated calibration chromosome does not exist within the MEDIPS SET.")}
 		signal = signal[genome_chr==plot_chr]
 		coupling = coupling[genome_chr==plot_chr]
-		message(paste("Plotting calibration plot for", plot_chr, "...\n", sep=" "))
+		message("Plotting calibration plot for ", plot_chr, " ...", appendLF=T)
 	}
 
 	if(plot_chr!="all" & (class(MSet)=="MEDIPSroiSet" | class(ISet)=="MEDIPSroiSet")){stop("Selecting chromosomes nor supported for regions of interest.")}
 
-	if(plot_chr=="all"){message("Plotting calibration plot for all chromosomes. It is recommended to redirect the output to a graphic device.\n")}
+	if(plot_chr=="all"){message("Plotting calibration plot for all chromosomes. It is recommended to redirect the output to a graphic device.", appendLF=T)}
 
 	if (!rpkm) {
         	descSignal = "#reads/window"

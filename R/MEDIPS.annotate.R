@@ -12,13 +12,13 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 	marts=biomaRt::listMarts(host=host)
 	mart="ENSEMBL_MART_ENSEMBL"
 	if(mart%in%marts[,1])
-		message("Getting annotation from database",as.character(marts[marts[,1]==mart,2]),"\n" )
+		message("Getting annotation from database ", paste(as.character(marts[marts[,1]==mart,2]), collapse=" "), appendLF=T)
 	else
 		stop(paste("cannot find mart \"",mart,"\" at ",host,sep=""))
 	biomart <- biomaRt::useMart(mart, dataset=dataset, host=host)
 	dSets=biomaRt::listDatasets(biomart)
 	if(dataset%in%dSets[,1])
-		message("Selecting dataset",as.character(dSets[dSets[,1]==dataset,2]),"\n" )
+		message("Selecting dataset", paste(as.character(dSets[dSets[,1]==dataset,2]), collapse=" ", appendLF=T)
 	else
 		stop(paste("cannot find dataset \"",dataset,"\" at ",host,sep=""))
 
@@ -35,7 +35,7 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 	}
 
 	if("GENE"%in%annotation){
-		message("...getting gene annotation\n")
+		message("...getting gene annotation", appendLF=T)
 		data <- getBM(attributes=c("ensembl_gene_id","chromosome_name","start_position","end_position"),mart=biomart,filters=f, values=chr)
 		data$chromosome_name=paste("chr",data$chromosome_name,sep="")
 		names(data)=c("id", "chr", "start", "end")
@@ -43,7 +43,7 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 	}
 
 	if("TSS"%in%annotation){
-		message("...getting TSS annotation\n")
+		message("...getting TSS annotation", appendLF=T)
 		data <- getBM(attributes=c("ensembl_transcript_id","chromosome_name","transcript_start","transcript_end","strand"),mart=biomart,filters=f, values=chr)
 		fs=data$strand == 1 #forward strand
 		data[fs ,"transcript_end"  ]=data[fs,"transcript_start"]+tssSz[2]
@@ -57,7 +57,7 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 	}
 
 	if("EXON"%in%annotation){
-		message("...getting exon annotation\n")
+		message("...getting exon annotation", appendLF=T)
 		data <- getBM(attributes=c("ensembl_exon_id","chromosome_name","exon_chrom_start","exon_chrom_end"),mart=biomart,filters=f, values=chr)
 		data$chromosome_name=paste("chr",data$chromosome_name,sep="")
 		names(data)=c("id", "chr", "start", "end")

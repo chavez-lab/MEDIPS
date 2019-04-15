@@ -26,7 +26,7 @@ MEDIPS.couplingVector <- function(pattern="CG", refObj=NULL){
 	}
 
 	## Get the genomic positions of the sequence pattern
-	message("Get genomic sequence pattern positions...\n")
+	message("Get genomic sequence pattern positions...", appendLF=T)
 	GRanges.pattern = MEDIPS.getPositions(BSgenome, pattern, chromosomes)
 
 	## Create the genome vector Granges object
@@ -41,7 +41,7 @@ MEDIPS.couplingVector <- function(pattern="CG", refObj=NULL){
 	}
 
 	##Count the number of sequence pattern in each window.
-	message(paste("Counting the number of ",pattern, "'s in each window...\n", sep=""))
+	message("Counting the number of ", pattern, "'s in each window...", appendLF=T)
 	genomeCoup = countOverlaps(Granges.genomeVec, GRanges.pattern)
 
 	COUPLINGsetObj = new('COUPLINGset', seq_pattern=pattern, genome_name=BSgenome, genome_CF=genomeCoup, number_pattern=length(GRanges.pattern), window_size=window_size, chr_names=chromosomes, chr_lengths=chr_lengths)

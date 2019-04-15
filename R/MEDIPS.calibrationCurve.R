@@ -16,7 +16,7 @@ MEDIPS.calibrationCurve <- function(MSet=NULL, CSet=NULL, input=FALSE){
 	coupling=	genome_CF(CSet)
 	maxCoup = floor(max(coupling)*0.8)
 
-	message("Calculating calibration curve...\n")
+	message("Calculating calibration curve...", appendLF=T)
 	mean_signal = NULL
 	coupling_level = NULL
 
@@ -62,13 +62,13 @@ MEDIPS.calibrationCurve <- function(MSet=NULL, CSet=NULL, input=FALSE){
  	if(!input){
 		##Linear curve by linear least squares regression
 		##################
-		message("Performing linear regression...\n")
+		message("Performing linear regression...", appendLF=T)
 
 		fit=lm(mean_signal[1:max_signal_index] ~ coupling_level[1:max_signal_index])
 		intercept=fit$coefficients[[1]]
 		slope=fit$coefficients[[2]]
-		message(paste("Intercept:", intercept, "\n"))
-		message(paste("Slope:", slope, "\n"))
+		message("Intercept: ", intercept, appendLF=T)
+		message("Slope:", slope, appendLF=T)
 	}
 	else{
 		intercept=NA

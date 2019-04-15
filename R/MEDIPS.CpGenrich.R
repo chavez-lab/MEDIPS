@@ -31,7 +31,7 @@ MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e
 	if(length(unique(seqlevels(GRange.Reads)))==1){chromosomes=unique(seqlevels(GRange.Reads))}
 
 	## Get chromosome lengths for all chromosomes within data set.
-	message(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))
+	message("Loading chromosome lengths for ", BSgenome, "...", appendLF=T)
 
 	chr_lengths=as.numeric(seqlengths(dataset)[chromosomes])
 
@@ -39,7 +39,7 @@ MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e
 
 	##Calculate CpG density for regions
 	total=length(chromosomes)
-	message("Calculating CpG density for given regions...\n")
+	message("Calculating CpG density for given regions...", appendLF=T)
 	seq=matrix(unlist(IRanges::lapply(RangedData(GRange.Reads),function(x){
 		i=which(mixedsort(chromosomes)%in%names(x) )
 		ranges(x)<-restrict(ranges(x),end=chr_lengths[which(chromosomes %in% names(x))])
@@ -61,7 +61,7 @@ MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e
 	regions.GoGe=(as.numeric(regions.CG)*as.numeric(all.genomic))/(as.numeric(regions.C)*as.numeric(regions.G))
 
 	##Calculate CpG density for reference genome
-	message(paste("Calculating CpG density for the reference genome", BSgenome, "...\n", sep = " "))
+	message("Calculating CpG density for the reference genome", BSgenome, "...", appendLF=T)
 	CG <- DNAStringSet("CG")
 	pdict0 <- PDict(CG)
 	params <- new("BSParams", X = dataset, FUN = countPDict, simplify = TRUE, exclude = c("rand", "chrUn"))

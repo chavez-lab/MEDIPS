@@ -15,30 +15,30 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 	if(diff.method=="edgeR"){
 
 		##Extract non-zero MeDIP count windows
-		message(paste("Extracting count windows with at least", minRowSum, "reads...\n", sep=" "))
+		message("Extracting count windows with at least ", minRowSum, " reads...", appendLF=T)
 		filter= rowSums(values)>=minRowSum
 
 		##Extract non-zero coupling factor rows
 		if(MeDIP){
-			message(paste("Extracting non-zero coupling factor windows...\n", sep=" "))
+			message("Extracting non-zero coupling factor windows...", appendLF=T)
 			filter=filter & base[,4]!=0
 		}
 
-		message(paste("Execute edgeR for count data of", sum(filter), "windows...\n", sep=" "))
-		message("(Neglecting parameter 'type')\n")
+		message("Execute edgeR for count data of ", sum(filter), " windows...", appendLF=T)
+		message("(Neglecting parameter 'type')", appendLF=T)
 
-		message("Creating a DGEList object...\n")
+		message("Creating a DGEList object...", appendLF=T)
 		edRObj.group=c(rep(1, nMSets1), rep(2, nMSets2))
 		edRObj.length=c(n.r.M1, n.r.M2)
 		#d <- edgeR::DGEList(counts = values[filter,], group = edRObj.group, lib.size=edRObj.length)
 		d <- edgeR::DGEList(counts = values[filter,], group = edRObj.group)
 
 		if(diffnorm=="tmm"){
-			message("Apply trimmed mean of M-values (TMM) for library sizes normalization...\n")
+			message("Apply trimmed mean of M-values (TMM) for library sizes normalization...", appendLF=T)
 			d=edgeR::calcNormFactors(d)
 		}
 		if(diffnorm=="quantile" | diffnorm=="none"){
-			message("Skipping trimmed mean of M-values (TMM) library size normalization...\n")
+			message("Skipping trimmed mean of M-values (TMM) library size normalization...", appendLF=T)
 			d=edgeR::calcNormFactors(d, method="none")
 		}
 	    if(diffnorm!="tmm" & diffnorm!="quantile" & diffnorm!="none"){
@@ -46,23 +46,23 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 	    }
 
 		if(nMSets1!=1 | nMSets2!=1){
-			message("Estimating common dispersion...\n")
+			message("Estimating common dispersion...", appendLF=T)
 			d=edgeR::estimateCommonDisp(d)
-			message("Estimating tagwise dispersion...\n")
+			message("Estimating tagwise dispersion...", appendLF=T)
 			d=edgeR::estimateTagwiseDisp(d)
-			message("Calculating differential coverage...\n")
+			message("Calculating differential coverage...", appendLF=T)
 			de.com=edgeR::exactTest(d,pair=c("2","1"))
 		}
 		else{
 			warning("There is no replication, setting dispersion to bcv^2 where bcv=0.01.\n")
 			warning("Please consider http://www.bioconductor.org/packages/release/bioc/vignettes/edgeR/inst/doc/edgeRUsersGuide.pdf section 2.9.\n")
 			bcv = 0.01
-			message("Calculating differential coverage...\n")
+			message("Calculating differential coverage...", appendLF=T)
 			de.com = suppressWarnings(edgeR::exactTest(d, dispersion=bcv^2, pair=c("2","1")))
 		}
 
 		##Adjusting p.values for multiple testing
-		message(paste("Adjusting p.values for multiple testing...\n", sep=" "))
+		message("Adjusting p.values for multiple testing...", appendLF=T)
 		colnames(de.com$table) = c("edgeR.logFC", "edgeR.logCPM", "edgeR.p.value")
 		diff.results = cbind(de.com$table, edgeR.adj.p.value=p.adjust(de.com$table$edgeR.p.value, p.adj))
 
@@ -74,13 +74,13 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 	#########
 	else{
 		##Extract non-zero MeDIP rows
-		message(paste("Extracting count windows with at least",minRowSum," reads...\n", sep=" "))
+		message("Extracting count windows with at least ",minRowSum, " reads...", appendLF=T)
 
 		filter= rowSums(values)>=minRowSum
 
 		##Extract non-zero coupling factor windows
 		if(MeDIP){
-			message(paste("Extracting non-zero coupling factor windows...\n", sep=" "))
+			message("Extracting non-zero coupling factor windows...", appendLF=T)
 			filter=filter & base[,4]!=0
 		}
 
@@ -89,7 +89,7 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 		filter=filter & !is.na(rowSums(values))
 
 
-		message(paste("Calculating score for", sum(filter), "windows...\n", sep=" "))
+		message("Calculating score for ", sum(filter), " windows...", appendLF=T)
 		ms1=1:nMSets1
 		ms2=(nMSets1+1):(nMSets1+nMSets2)
 		##Calculate ratios##
@@ -113,7 +113,7 @@ MEDIPS.diffMeth = function(base = NULL, values=NULL, diff.method="ttest", nMSets
 		score = (-log10(t.test.p.value)*10)*log(ratio)
 
 		##Adjusting p.values for multiple testing
-		message(paste("Adjusting p.values for multiple testing...\n", sep=" "))	
+		message("Adjusting p.values for multiple testing...", appendLF=T)
 
 		diff.results = cbind(score.log2.ratio=log2(ratio), score.p.value=t.test.p.value, score.adj.p.value=p.adjust(t.test.p.value, p.adj), score=score)
 

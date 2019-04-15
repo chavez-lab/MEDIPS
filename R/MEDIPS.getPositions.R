@@ -20,7 +20,7 @@ MEDIPS.getPositions <-function(BSgenome=NULL, pattern=NULL, chromosomes=NULL){
 
 	##Determine pattern positions by accessing Biostrings
 	for(chromosome in chromosomes){
-		message(paste("Searching in", chromosome, "..."))
+		message("Searching in ", chromosome, " ...", appendLF=T)
 	        {subject<-genomedata[[chromosome]]}
 
 		plus_matches<-matchPattern(pattern,subject)
@@ -36,10 +36,10 @@ MEDIPS.getPositions <-function(BSgenome=NULL, pattern=NULL, chromosomes=NULL){
 			currentchr=c(currentchr,rep(chromosome,length(start)))
 			currentstart=c(currentstart,start)
 		}
-		message(paste("[", length(start), "] found.\n"))
+		message("[", length(start), "] found.", appendLF=T)
 	}
 
-	message(paste("Number of identified ", pattern, " pattern: ", length(currentchr), "\n"))
+	message("Number of identified ", pattern, " pattern: ", length(currentchr), appendLF=T)
 	gc()
 	return(GRanges(seqnames=currentchr, ranges=IRanges(start=currentstart, end=currentstart)))
 }

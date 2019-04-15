@@ -20,7 +20,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
         scanFlag = scanBamFlag(isUnmappedQuery = FALSE, isSecondaryAlignment = isSecondaryAlignment)
         if (bamindex & (!is.null(chr.select) | !is.null(ROI))) {
             if (!is.null(ROI)) {
-                message("Reading bam alignment", fileName, "\n considering ROIs using bam index\n")
+                message("Reading bam alignment ", fileName, "\n considering ROIs using bam index", appendLF=T)
                 if (!is.null(extend)) {
                   ROI[, 2] = ROI[, 2] - extend
                   ROI[, 3] = ROI[, 3] + extend
@@ -32,15 +32,15 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
                 sel = GRanges(chr.select, IRanges(1, 536870912))
             }
             else {
-                message("Reading bam alignment", fileName, "\n considering ",
-                  chr.select, " using bam index\n")
+                message("Reading bam alignment ", fileName, "\n considering ",
+                  paste(chr.select, collapse="\t"), " using bam index", appendLF=T)
                 sel = GRanges(chr.select, IRanges(1, 536870912))
             }
             scanParam = ScanBamParam(flag = scanFlag, simpleCigar= simpleCigar, what = c("rname",
                 "pos", "strand", "qwidth", "isize", "mpos"), which = sel)
         }
         else {
-            message("Reading bam alignment", fileName, "\n")
+            message("Reading bam alignment ", fileName, appendLF=T)
             scanParam = ScanBamParam(flag = scanFlag, simpleCigar= simpleCigar, what = c("rname",
                 "pos", "strand", "qwidth", "isize", "mpos"))
         }
@@ -54,7 +54,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
             stringsAsFactors = F)
     }
     else {
-        message("Reading bed alignment", fileName, "\n")
+        message("Reading bed alignment ", fileName, appendLF=T)
         regions = read.table(paste(path, fileName, sep = "/"),
             sep = "\t", header = FALSE, row.names = NULL, comment.char = "",
             colClasses = c("character", "numeric", "numeric",
@@ -62,37 +62,34 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
         names(regions) = c("chr", "start", "stop", "strand")
     }
     if (!is.null(chr.select) & !bamindex) {
-        message("Selecting ", chr.select, "\n")
+        message("Selecting ", paste(chr.select, collapse="\t"), appendLF=T)
         regions = regions[regions[, 1] %in% as.vector(chr.select),
             ]
     }
-    message("Total number of imported short reads: ", nrow(regions),
-        "\n", sep = "")
+    message("Total number of imported short reads: ", nrow(regions), appendLF=T)
     regions = adjustReads(regions, extend, shift)
-    message("Creating GRange Object...\n")
+    message("Creating GRange Object...", appendLF=T)
     regions_GRange = GRanges(seqnames = regions$chr, ranges = IRanges(start = regions$start,
         end = regions$stop), strand = regions$strand)
 
     if(is.logical(uniq)){stop("Parameter 'uniq' is not logical anymore, please specify a p-value and see the MEDIPS vignette.")}
     if (uniq == 1) {
-		message("Keep at most one 1 read mapping to the same genomic location.\n", sep = "")
+		message("Keep at most one 1 read mapping to the same genomic location.", appendLF=T)
 		regions_GRange = unique(regions_GRange)
-		message("Number of remaining reads: ", length(regions_GRange),
-			"\n", sep = "")
+		message("Number of remaining reads: ", length(regions_GRange), appendLF=T)
 	} else if (uniq < 1 & uniq > 0) {
 		max_dup_number = qpois(1 - as.numeric(uniq), length(regions_GRange) /
 			sum(as.numeric(seqlengths(dataset)[chr.select])))
 		max_dup_number = max(1, max_dup_number)
 		message("Keep at most ", max_dup_number,
-			" read(s) mapping to the same genomic location\n", sep = "")
+			" read(s) mapping to the same genomic location", appendLF=T)
 		uniq_regions = unique(regions_GRange)
 		dup_number = countMatches(uniq_regions, regions_GRange)
 		dup_number[dup_number > max_dup_number] = max_dup_number
 		regions_GRange = rep(uniq_regions, times = dup_number)
-		message("Number of remaining reads: ", length(regions_GRange),
-			"\n", sep = "")
+		message("Number of remaining reads: ", length(regions_GRange), appendLF=T)
 	} else if (uniq == 0) {
-		message("Do not correct for potential PCR artefacts (keep all reads).\n", sep = "")
+		message("Do not correct for potential PCR artefacts (keep all reads).", appendLF=T)
 	} else {
 		stop("Must specify a valid value for parameter uniq. Please check MEDIPS vignette.")
 	}
@@ -114,7 +111,7 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
             isSecondMateRead = F, isSecondaryAlignment = isSecondaryAlignment)
         if (bamindex & (!is.null(chr.select) | !is.null(ROI))) {
             if (!is.null(ROI)) {
-                message("Reading bam alignment", fileName, "\n considering ROIs using bam index\n")
+                message("Reading bam alignment ", fileName, "\n considering ROIs using bam index", appendLF=T)
                 if (!is.null(extend)) {
                   ROI[, 2] = ROI[, 2] - extend
                   ROI[, 3] = ROI[, 3] + extend
@@ -128,14 +125,14 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
             }
             else {
                 message("Reading bam alignment", fileName, "\n considering ",
-                  chr.select, " using bam index\n")
+                  paste(chr.select, collapse="\t"), " using bam index", appendLF=T)
                 sel = GRanges(chr.select, IRanges(1, 536870912))
             }
         scanParam = ScanBamParam(flag = scanFlag, simpleCigar= simpleCigar, what = c("rname",
 		    "pos", "strand", "qwidth", "isize", "mpos"), which = sel)
         }
         else {
-            message("Reading bam alignment", fileName, "\n")
+            message("Reading bam alignment ", fileName, appendLF="TRUE")
             scanParam = ScanBamParam(flag = scanFlag, simpleCigar = simpleCigar, what = c("rname",
                   "pos", "strand", "qwidth", "isize", "mpos"))
         }
@@ -149,23 +146,23 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
         stop("BED files in paired end mode not supported.\n")
     }
     if (!is.null(chr.select) & !bamindex) {
-        message("Selecting", chr.select, "\n")
+        message("Selecting", paste(chr.select, collapse="\t"), appendLF=T)
         regions = regions[regions[, 1] %in% as.vector(chr.select),
             ]
     }
     message("Total number of imported first mate reads in properly mapped pairs: ",
-        nrow(regions), "\n", sep = "")
+        nrow(regions), appendLF=T)
     message("scanBamFlag: isPaired = T, isProperPair=TRUE , hasUnmappedMate=FALSE, ",
-        "isUnmappedQuery = F, isFirstMateRead = T, isSecondMateRead = F\n",
-        sep = "")
-    message("Mean insertion size: ", mean(abs(regions$isize)), " nt\n",
-        sep = "")
+        "isUnmappedQuery = F, isFirstMateRead = T, isSecondMateRead = F",
+        appendLF=T)
+    message("Mean insertion size: ", mean(abs(regions$isize)), " nt",
+        appendLF=T)
     message("SD of the insertion size: ", sd(abs(regions$isize)),
-        " nt\n", sep = "")
-    message("Max insertion size: ", max(abs(regions$isize)), " nt\n",
-        sep = "")
-    message("Min insertion size: ", min(abs(regions$isize)), " nt\n",
-        sep = "")
+        " nt", appendLF=T)
+    message("Max insertion size: ", max(abs(regions$isize)), " nt",
+        appendLF=T)
+    message("Min insertion size: ", min(abs(regions$isize)), " nt",
+        appendLF=T)
 
    qwidth = regions[, "qwidth"]
    regions = data.frame(chr = as.character(as.vector(regions$rname)),
@@ -180,31 +177,31 @@ function (fileName, path = NULL, extend, shift, chr.select = NULL,
    if(extend!=0){warning("The extend parameter will be neglected, because the actual DNA fragment length is known in paired-end data.\n")}
    if(shift!=0){warning("The shift parameter will be neglected, because the actual DNA fragment position is known in paired-end data.\n")}
 
-    message("Creating GRange Object...\n")
+    message("Creating GRange Object...", appendLF=T)
     regions_GRange = GRanges(seqnames = regions$chr, ranges = IRanges(start = regions$start,
         end = regions$stop), strand = regions$strand)
 
 	if(is.logical(uniq)){stop("Parameter 'uniq' is not logical anymore, please specify a p-value and see the MEDIPS vignette.")}
 
 	if (uniq == 1) {
-		message("Keep at most 1 read mapping to the same genomic location.\n", sep = "")
+		message("Keep at most 1 read mapping to the same genomic location.", appendLF=T)
 		regions_GRange = unique(regions_GRange)
 		message("Number of remaining short reads: ", length(regions_GRange),
-			"\n", sep = "")
+			appendLF=T)
 	} else if (uniq < 1 & uniq > 0) {
 		max_dup_number = qpois(1 - as.numeric(uniq), length(regions_GRange) /
 			sum(as.numeric(seqlengths(dataset)[chr.select])))
 		max_dup_number = max(1, max_dup_number)
 		message("Keep at most ", max_dup_number,
-			" first mate read(s) mapping to the same genomic location\n", sep = "")
+			" first mate read(s) mapping to the same genomic location", appendLF=T)
 		uniq_regions = unique(regions_GRange)
 		dup_number = countMatches(uniq_regions, regions_GRange)
 		dup_number[dup_number > max_dup_number] = max_dup_number
 		regions_GRange = rep(uniq_regions, times = dup_number)
 		message("Number of remaining short reads: ", length(regions_GRange),
-			"\n", sep = "")
+			appendLF=T)
 	} else if (uniq == 0) {
-		message("Do not correct for potential PCR artefacts (keep all reads).\n", sep = "")
+		message("Do not correct for potential PCR artefacts (keep all reads).", appendLF=T)
 	} else {
 		stop("Must specify a valid value for parameter uniq. Please check MEDIPS vignette.")
 	}
@@ -231,9 +228,9 @@ scanBamToGRanges <- function(...) {
 ##Modified:	29/10/2012
 ##Author:	Matthias Lienhard
 getMObjectFromWIG <- function(fileName, path, chr.select=NULL,BSgenome){
-        message("Reading wiggle file",fileName,"\n")
+        message("Reading wiggle file ", fileName, appendLF=T)
 	if(!is.null(chr.select)){
-          message("Select chromosomes",chr.select,"\n")
+          message("Select chromosomes ", paste(chr.select, collapse="\t"), appendLF=T)
           sel=GRanges(chr.select,IRanges(1, 536870912))
 	  #this function will warn, if type is not bigwig
 	  wiggle=rtracklayer::import(paste(path,fileName,sep="/"), which=sel)
@@ -314,14 +311,14 @@ setTypes<-function(types){
 ##Author:	Lukas Chavez, Joern Dietrich
 adjustReads<-function(regions, extend, shift){
 	if(extend!=0){
-		message("Extending reads...\n")
+		message("Extending reads...", appendLF=T)
 		extend.c = pmax(0,extend-regions$stop+regions$start)
 		regions$stop[regions$strand=="+"]=regions$stop[regions$strand=="+"]+extend.c[regions$strand=="+"]
 		regions$start[regions$strand=="-"]=regions$start[regions$strand=="-"]-extend.c[regions$strand=="-"]
 	}
 
 	if(shift!=0){
-		message("Shifting reads...\n")
+		message("Shifting reads...", appendLF=T)
 		regions$start[regions$strand=="+"] = regions$start[regions$strand=="+"]+shift
 		regions$stop[regions$strand=="+"] = regions$stop[regions$strand=="+"]+shift
 		regions$start[regions$strand=="-"] = regions$start[regions$strand=="-"]-shift

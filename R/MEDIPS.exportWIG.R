@@ -65,7 +65,7 @@ function(Set=NULL, CSet=NULL, file=NULL, format="rpkm", descr=""){
 	write.table(header_out, file=file, sep="", quote=F, row.names=F, col.names=F)
 
 	for(i in 1:length(chr_names)){
-		message(paste("Writing data for ", chr_names[i], "...\n", sep=""))
+		message(paste("Writing data for ", chr_names[i], "...", collapse="\t"))
 		chr_header=paste("fixedStep chrom=", chr_names[i]," start=1 step=", window_size, " span=",  window_size, sep="")
 		write.table(chr_header, file=file, sep="", quote=F, row.names=F, col.names=F, append=T)
 		temp_data=output_data[genome_chr==chr_names[i]]

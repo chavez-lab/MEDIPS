@@ -32,7 +32,7 @@ function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, 
 	if(length(unique(seqlevels(GRange.Reads)))==1){chromosomes=unique(seqlevels(GRange.Reads))}
 
 	## Get chromosome lengths for all chromosomes within data set.
-	message(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))
+	message("Loading chromosome lengths for ", BSgenome, "...", appendLF=T)
 	#chr_lengths=as.numeric(sapply(chromosomes, function(x){as.numeric(length(dataset[[x]]))}))
 	chr_lengths=as.numeric(seqlengths(dataset)[chromosomes])
 
@@ -49,10 +49,10 @@ function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, 
 		if(a==1){
 			distinctSets_size=floor(length(GRange.Reads)/2)
 			subset_size=floor(distinctSets_size/nit)
-			message("Saturation analysis...\n")
+			message("Saturation analysis...", appendLF=T)
 		}
 		if(a==2){
-			message("Estimated saturation analysis...\n")
+			message("Estimated saturation analysis...", appendLF=T)
 			distinctSets_size=length(GRange.Reads)
 			GRange.Reads = c(GRange.Reads, GRange.Reads)
 			nit=nit*2
@@ -62,7 +62,7 @@ function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, 
 		#The loops: First one is  for repeating the random process and results are averaged at the end.
 		####################################
 		for(r in 1:nrit){
-			message(paste("Random iteration: ",r,"/", nrit, "...\n", sep=""))
+			message("Random iteration: ", r, "/", nrit, "...", appendLF=T)
 
 			correlation=0
 			no_considered_reads=0
@@ -74,7 +74,7 @@ function(file=NULL, BSgenome=NULL, nit=10, nrit=1, empty_bins=TRUE, rank=FALSE, 
 			#The loops: Second one is  for calculating correlations for subsets of the current total set of given regions.
 			####################################
 			for(l in 1:nit){
-				message(paste("Processing subset ", l, "/", nit, "...\n", sep=""))
+				message("Processing subset ", l, "/", nit, "...", appendLF=T)
 
 				subset_start_one=(l-1)*subset_size+1
 				subset_start_two=((l-1)*subset_size+1)+distinctSets_size

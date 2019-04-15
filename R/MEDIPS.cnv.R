@@ -97,7 +97,7 @@ MEDIPS.addCNV<-function(ISet1, ISet2, results, cnv.Frame=1000){
 	cvn.GRanges.genome = MEDIPS.GenomicCoordinates(supersize_chr, no_chr_windows, chr_names(tmp.cnv), chr_lengths(tmp.cnv), cnv.Frame)
 	base = data.frame(chr=as.vector(seqnames(cvn.GRanges.genome)), start=start(cvn.GRanges.genome), stop=end(cvn.GRanges.genome), stringsAsFactors=F)
 
-	message(paste("CNV analysis...\n", sep=" "))
+	message("CNV analysis...", appendLF=T)
 	cnv.combined = MEDIPS.cnv(base=base, rpkm.input=cnv.rpkm.input, nISets1=nISets1, nISets2=nISets2)
 
 	dummy.results = matrix(ncol=1, nrow=(nrow(base)))
@@ -106,7 +106,7 @@ MEDIPS.addCNV<-function(ISet1, ISet2, results, cnv.Frame=1000){
 	}
 	colnames(dummy.results)="CNV"
     	dummy.results=cbind(dummy.results, base)
-	
+
 	results=MEDIPS.setAnnotation(results, dummy.results, cnv=T)
 
 	rm(dummy.results)

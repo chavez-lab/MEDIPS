@@ -102,7 +102,7 @@ MEDIPS.meth = function(
 	##Add counts
 	if(!is.null(MSet1)){
 		for(i in 1:nMSets1){
-			message(paste("Preprocessing MEDIPS SET ", i, " in MSet1...\n", sep=""))
+			message("Preprocessing MEDIPS SET ", i, " in MSet1...", appendLF=T)
 			counts.medip = cbind(counts.medip, MSet1=genome_count(MSet1[[i]]))
 			rpkm.medip = cbind(rpkm.medip, round(((genome_count(MSet1[[i]])*10^9)/(window_size*number_regions(MSet1[[i]]))), digits=2))
 			if(MeDIP){
@@ -113,7 +113,7 @@ MEDIPS.meth = function(
 	}
 	if(!is.null(MSet2)){
 		 for(i in 1:nMSets2){
-			message(paste("Preprocessing MEDIPS SET ", i, " in MSet2...\n", sep=""))
+			message("Preprocessing MEDIPS SET ", i, " in MSet2...", appendLF=T)
 			counts.medip = cbind(counts.medip, MSet2=genome_count(MSet2[[i]]))
 			rpkm.medip = cbind(rpkm.medip, round(((genome_count(MSet2[[i]])*10^9)/(window_size*number_regions(MSet2[[i]]))), digits=2))
 			if(MeDIP){
@@ -124,14 +124,14 @@ MEDIPS.meth = function(
 	}
 	if(!is.null(ISet1)){
 		for(i in 1:nISets1){
-			message(paste("Preprocessing INPUT SET ", i, " in ISet1...\n", sep=""))
+			message("Preprocessing INPUT SET ", i, " in ISet1...", appendLF=T)
 			counts.input = cbind(counts.input, ISet1=genome_count(ISet1[[i]]))
 			rpkm.input = cbind(rpkm.input, round(((genome_count(ISet1[[i]])*10^9)/(window_size*number_regions(ISet1[[i]]))), digits=2))
 		   }
 	}
 	if(!is.null(ISet2)){
 		for(i in 1:nISets2){
-			message(paste("Preprocessing INPUT SET ", i, " in ISet2...\n", sep=""))
+			message("Preprocessing INPUT SET ", i, " in ISet2...", appendLF=T)
 			counts.input = cbind(counts.input, ISet2=genome_count(ISet2[[i]]))
 			rpkm.input = cbind(rpkm.input, round(((genome_count(ISet2[[i]])*10^9)/(window_size*number_regions(ISet2[[i]]))), digits=2))
 		 	}
@@ -142,7 +142,7 @@ MEDIPS.meth = function(
 	if(!is.null(chr)){
 		fi=base[,1]%in%chr
 
-		message("Extracting data for", chr, "...\n", sep=" ")
+		message("Extracting data for ", chr, " ...", appendLF=T)
 		if(length(fi)==0){stop("Stated chromosome does not exist in the COUPLING SET.")}
 		if(!is.null(counts.medip)){
 			counts.medip = counts.medip[fi,]
@@ -154,7 +154,7 @@ MEDIPS.meth = function(
 			rpkm.input = rpkm.input[fi,]
 		}
 		base = base[fi,]
-		message(nrow(base), "windows on", chr, "\n",sep=" ")
+		message(nrow(base), " windows on ", chr, appendLF=T)
 	}
 
 	##Set colnames and transform to data.frames
@@ -220,7 +220,7 @@ MEDIPS.meth = function(
 	##calculate differential coverage
 	##################################
 	if(!is.null(MSet1) & !is.null(MSet2)){
-		message(paste("Differential coverage analysis...\n", sep=" "))
+		message("Differential coverage analysis...", appendLF=T)
 
 		##Correct for test selection if necessary
 		if((nMSets1<3 | nMSets2<3) & diff.method=="ttest"){
@@ -249,7 +249,7 @@ MEDIPS.meth = function(
 
 			#Quantile normalization
 			if(diffnorm=="quantile"){
-				message("Performing quantile normalization on sequencing counts. Please note, the returned counts - but not the returned rpkm values - will be quantile normalized.\n")
+				message("Performing quantile normalization on sequencing counts. Please note, the returned counts - but not the returned rpkm values - will be quantile normalized.", appendLF=T)
 				counts.medip.coln = colnames(counts.medip)
 				counts.medip = preprocessCore::normalize.quantiles(as.matrix(counts.medip), copy=FALSE)
 				counts.medip <- round(counts.medip)
@@ -281,7 +281,7 @@ MEDIPS.meth = function(
 		}
 		else{stop("Selected method for calculating differential coverage not supported")}
 
-		message("Please note, log2 ratios are reported as log2(MSet1/MSet2).\n")
+		message("Please note, log2 ratios are reported as log2(MSet1/MSet2).", appendLF=T)
 		diff.results = diff.results.list$diff.results
 		diff.index = diff.results.list$diff.index
 
@@ -290,7 +290,7 @@ MEDIPS.meth = function(
 
 	}
 	else{
-		warning("No differential coverage will be calculated- only one group of MEDIPS SETs given.\n")
+		warning("No differential coverage will be calculated- only one group of MEDIPS SETs given.")
 	}
 
 	##If two groups of INPUT SETs are given
@@ -298,7 +298,7 @@ MEDIPS.meth = function(
 	##################################
 	if(CNV){
 		if(!is.null(ISet1) & !is.null(ISet2)){
-			message(paste("CNV analysis...\n", sep=" "))
+			message(paste("CNV analysis...", appendLF=T)
 			cnv.combined = MEDIPS.cnv(base=base, rpkm.input=rpkm.input, nISets1=nISets1, nISets2=nISets2)
 		}
 		else{
@@ -308,7 +308,7 @@ MEDIPS.meth = function(
 
 	##Create results table
 	##################################
-	message(paste("Creating results table...\n", sep=" "))
+	message("Creating results table...", appendLF=T)
 	if(!is.null(counts.medip)){
 		if(MeDIP){
 			results = data.frame(base, counts.medip, rpkm.medip, rms, stringsAsFactors=F)
@@ -411,7 +411,7 @@ MEDIPS.meth = function(
 
 	##Add diff.meth results
 	if(nMSets1!=0 & nMSets2!=0){
-		message(paste("Adding differential coverage results...\n", sep=" "))
+		message("Adding differential coverage results...", appendLF=T)
 		dummy.results = matrix(ncol=ncol(diff.results), nrow=nrow(results))
 
 		if(diff.method=="edgeR"){
@@ -432,7 +432,7 @@ MEDIPS.meth = function(
 	##Add CNV results
 	if(!is.null(ISet1) & !is.null(ISet2)){
 		if(CNV){
-			message(paste("Adding CNV results...\n", sep=" "))
+			message("Adding CNV results...", appendLF=T)
 			dummy.results = matrix(ncol=1, nrow=(nrow(results)))
 			for(i in 1:nrow(cnv.combined)){
 				dummy.results[cnv.combined[i,1]:cnv.combined[i,2]] = cnv.combined[i,3]

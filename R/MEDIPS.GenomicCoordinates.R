@@ -10,7 +10,7 @@
 
 MEDIPS.GenomicCoordinates <- function(supersize_chr=NULL, no_chr_windows=NULL, chromosomes=NULL, chr_lengths=NULL, window_size=NULL){
 
-	message("Calculating genomic coordinates...")
+	message("Calculating genomic coordinates...", appendLF=T)
 
 	genomeVec_chr=vector(length=supersize_chr[length(chromosomes)], mode="character")
 	genomeVec_pos=vector(length=supersize_chr[length(chromosomes)], mode="numeric")
@@ -27,7 +27,7 @@ MEDIPS.GenomicCoordinates <- function(supersize_chr=NULL, no_chr_windows=NULL, c
 		}
         }
 
-	message("\nCreating Granges object for genome wide windows...\n")
+	message("Creating Granges object for genome wide windows...", appendLF=T)
 	ROIs = GRanges(seqnames=genomeVec_chr, ranges=IRanges(start=genomeVec_pos, end=genomeVec_pos+window_size-1))
 
 	gc()

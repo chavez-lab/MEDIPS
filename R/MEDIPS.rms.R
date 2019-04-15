@@ -20,7 +20,7 @@ MEDIPS.rms <- function(MSet=NULL, CSet=NULL, ccObj=NULL){
 
 	##Weight signals by linear regression obtained parameters
 	####################
-	message("Calculating relative methylation score...\n")
+	message("Calculating relative methylation score...", appendLF=T)
 
         estim=numeric(length(ccObj$mean_signal))
 

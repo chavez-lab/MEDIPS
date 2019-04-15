@@ -28,9 +28,9 @@ function (file = NULL, extend = 0, shift = 0, window_size = 300,
     }
     dataset = get(ls(paste("package:", BSgenome, sep = "")))
     if (is.null(chr.select)) {
-        message("All chromosomes in the reference BSgenome will be processed:\n")
+        message("All chromosomes in the reference BSgenome will be processed:", appendLF=T)
         chr.select = seqnames(dataset)
-        message(paste(chr.select, collapse='\t'))
+        message(paste(chr.select, collapse='\t'), appendLF=T)
     }
     else {
         if (sum(!chr.select %in% seqnames(dataset)) != 0) {
@@ -68,7 +68,7 @@ function (file = NULL, extend = 0, shift = 0, window_size = 300,
         Granges.genomeVec = MEDIPS.GenomicCoordinates(supersize_chr,
             no_chr_windows, chr.select, chr_lengths, window_size)
 
-        message("Calculating short read coverage at genome wide windows...\n")
+        message("Calculating short read coverage at genome wide windows...", appendLF=T)
         overlap = countOverlaps(Granges.genomeVec, GRange.Reads)
         datachr = unique(seqlevels(GRange.Reads))
 

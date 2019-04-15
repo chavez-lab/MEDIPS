@@ -53,7 +53,7 @@ MEDIPS.mergeFrames = function(frames=NULL, distance=1){
 
 	output = cbind(output, paste("ID", seq(1, nrow(output)), sep="_"))
 
-	message(paste("Number of merged frames: ", length(output[,1]), sep=""), quote=F)
+	message("Number of merged frames: ", length(output[,1]), appendLF=T)
 	output=list(chr=as.character(output[,1]), start=format(as.numeric(output[,2]), scientific=F, trim=T), stop=format(as.numeric(output[,3]), scientific=F, trim=T), ID=as.character(output[,4]))
 	return(as.data.frame(output,stringsAsFactors=F))
 }

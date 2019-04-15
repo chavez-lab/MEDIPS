@@ -3,7 +3,7 @@
 ##########################################################################
 ##Input:	Names of annotation, dataset and mart
 ##Param:	mart, dataset. annotation
-##Output:	List of annotation matrix 
+##Output:	List of annotation matrix
 ##Requires:	biomaRt
 ##Modified:	01/19/2016
 ##Author:	Joern Dietrich, Matthias Lienhard, Lukas Chavez
@@ -12,16 +12,16 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 	marts=biomaRt::listMarts(host=host)
 	mart="ENSEMBL_MART_ENSEMBL"
 	if(mart%in%marts[,1])
-		cat("Getting annotation from database",as.character(marts[marts[,1]==mart,2]),"\n" )
+		message("Getting annotation from database",as.character(marts[marts[,1]==mart,2]),"\n" )
 	else
-		stop(paste("cannot find mart \"",mart,"\" at ",host,sep=""))		
+		stop(paste("cannot find mart \"",mart,"\" at ",host,sep=""))
 	biomart <- biomaRt::useMart(mart, dataset=dataset, host=host)
 	dSets=biomaRt::listDatasets(biomart)
 	if(dataset%in%dSets[,1])
-		cat("Selecting dataset",as.character(dSets[dSets[,1]==dataset,2]),"\n" )
+		message("Selecting dataset",as.character(dSets[dSets[,1]==dataset,2]),"\n" )
 	else
-		stop(paste("cannot find dataset \"",dataset,"\" at ",host,sep=""))		
-	
+		stop(paste("cannot find dataset \"",dataset,"\" at ",host,sep=""))
+
 	biomart <- biomaRt::useMart(mart, dataset,host=host)
 	Annotation=NULL
 	if(! is.null(chr)) {
@@ -32,18 +32,18 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 	}else{
 		f=""
 		chr=""
-	} 
+	}
 
 	if("GENE"%in%annotation){
-		cat("...getting gene annotation\n")
+		message("...getting gene annotation\n")
 		data <- getBM(attributes=c("ensembl_gene_id","chromosome_name","start_position","end_position"),mart=biomart,filters=f, values=chr)
 		data$chromosome_name=paste("chr",data$chromosome_name,sep="")
 		names(data)=c("id", "chr", "start", "end")
 		Annotation=list("Gene"=data)
 	}
-	
+
 	if("TSS"%in%annotation){
-		cat("...getting TSS annotation\n")
+		message("...getting TSS annotation\n")
 		data <- getBM(attributes=c("ensembl_transcript_id","chromosome_name","transcript_start","transcript_end","strand"),mart=biomart,filters=f, values=chr)
 		fs=data$strand == 1 #forward strand
 		data[fs ,"transcript_end"  ]=data[fs,"transcript_start"]+tssSz[2]
@@ -55,26 +55,26 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 		names(data)=c("id", "chr", "start", "end","strand")
 		Annotation=c(Annotation,list("TSS"=data[,1:4]))
 	}
-	
+
 	if("EXON"%in%annotation){
-		cat("...getting exon annotation\n")
+		message("...getting exon annotation\n")
 		data <- getBM(attributes=c("ensembl_exon_id","chromosome_name","exon_chrom_start","exon_chrom_end"),mart=biomart,filters=f, values=chr)
 		data$chromosome_name=paste("chr",data$chromosome_name,sep="")
 		names(data)=c("id", "chr", "start", "end")
 		Annotation=c(Annotation,list("EXON"=data))
 	}
-	
-	
+
+
 	return(Annotation)
 }
 
 
 ##########################################################################
-##Function to add annotation to result data regarding their position 
+##Function to add annotation to result data regarding their position
 ##########################################################################
 ##Input:	Result matrix or data.frame and list of annotation
 ##Param:	regions. annotation
-##Output:	List of annotation matrix 
+##Output:	List of annotation matrix
 ##Requires:	IRanges
 ##Modified:	11/01/2015
 ##Author:	Joern Dietrich, Matthias Lienhard
@@ -107,5 +107,3 @@ MEDIPS.setAnnotation<-function(regions, annotation, cnv=F){
 	}
 	return(ans)
 }
-
-

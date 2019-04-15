@@ -8,38 +8,38 @@
 ##Modified:	11/10/2011
 ##Author:	Lukas Chavez, Joern Dietrich
 
-MEDIPS.getPositions <-function(BSgenome=NULL, pattern=NULL, chromosomes=NULL){	
-	
+MEDIPS.getPositions <-function(BSgenome=NULL, pattern=NULL, chromosomes=NULL){
+
 	if(is.null(pattern)){stop("Must specify a sequence pattern!")}
-	
+
 	currentchr=NULL
 	currentstart=NULL
-	
+
 	organism=ls(paste("package:", BSgenome, sep=""))
 	genomedata=get(organism)
-	
+
 	##Determine pattern positions by accessing Biostrings
 	for(chromosome in chromosomes){
-		cat(paste("Searching in", chromosome, "..."))
+		message(paste("Searching in", chromosome, "..."))
 	        {subject<-genomedata[[chromosome]]}
-		
+
 		plus_matches<-matchPattern(pattern,subject)
-		start=start(plus_matches)   
+		start=start(plus_matches)
 		currentchr=c(currentchr,rep(chromosome,length(start)))
-		currentstart=c(currentstart,start) 
+		currentstart=c(currentstart,start)
 
 		pattern<-DNAString(pattern)
 		rcpattern<-reverseComplement(pattern)
 		if(pattern!=rcpattern){
 			minus_matches<-matchPattern(rcpattern,subject)
-			start=start(minus_matches) 
+			start=start(minus_matches)
 			currentchr=c(currentchr,rep(chromosome,length(start)))
-			currentstart=c(currentstart,start) 
+			currentstart=c(currentstart,start)
 		}
-		cat(paste("[", length(start), "] found.\n"))			
+		message(paste("[", length(start), "] found.\n"))
 	}
 
-	cat(paste("Number of identified ", pattern, " pattern: ", length(currentchr), "\n"))
+	message(paste("Number of identified ", pattern, " pattern: ", length(currentchr), "\n"))
 	gc()
 	return(GRanges(seqnames=currentchr, ranges=IRanges(start=currentstart, end=currentstart)))
 }

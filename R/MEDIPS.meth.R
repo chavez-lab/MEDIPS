@@ -298,7 +298,7 @@ MEDIPS.meth = function(
 	##################################
 	if(CNV){
 		if(!is.null(ISet1) & !is.null(ISet2)){
-			message(paste("CNV analysis...", appendLF=T)
+			message("CNV analysis...", appendLF=T)
 			cnv.combined = MEDIPS.cnv(base=base, rpkm.input=rpkm.input, nISets1=nISets1, nISets2=nISets2)
 		}
 		else{

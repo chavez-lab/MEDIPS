@@ -18,7 +18,7 @@ MEDIPS.getAnnotation<-function(host="www.ensembl.org",dataset=c("hsapiens_gene_e
 	biomart <- biomaRt::useMart(mart, dataset=dataset, host=host)
 	dSets=biomaRt::listDatasets(biomart)
 	if(dataset%in%dSets[,1])
-		message("Selecting dataset", paste(as.character(dSets[dSets[,1]==dataset,2]), collapse=" ", appendLF=T)
+		message("Selecting dataset", paste(as.character(dSets[dSets[,1]==dataset,2]), collapse=" "), appendLF=T)
 	else
 		stop(paste("cannot find dataset \"",dataset,"\" at ",host,sep=""))
 

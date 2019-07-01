@@ -8,18 +8,18 @@
 ##Author:	Lukas Chavez, Matthias Lienhard
 
 MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr="all", rpkm=T, main="Calibration plot", xrange=T){
-	
+
 	##Proof data accordance....
 	##########################
 	input=F
 
-	if(!(is.null(MSet)) & (class(MSet)!="MEDIPSset" & class(MSet)!="MEDIPSroiSet")) stop("MSet must be a MEDIPSset or MEDIPSroiSet object!")	
-	if(!(is.null(ISet)) & (class(ISet)!="MEDIPSset" & class(ISet)!="MEDIPSroiSet")) stop("ISet must be a MEDIPSset or MEDIPSroiSet object!")	
-	if(is.null(MSet) & is.null(ISet) ) stop("ISet and/or MSet must be specified")	
+	if(!(is.null(MSet)) & (class(MSet)!="MEDIPSset" & class(MSet)!="MEDIPSroiSet")) stop("MSet must be a MEDIPSset or MEDIPSroiSet object!")
+	if(!(is.null(ISet)) & (class(ISet)!="MEDIPSset" & class(ISet)!="MEDIPSroiSet")) stop("ISet must be a MEDIPSset or MEDIPSroiSet object!")
+	if(is.null(MSet) & is.null(ISet) ) stop("ISet and/or MSet must be specified")
 
 	#print("Checking CSet")
 	if(class(CSet)!="COUPLINGset") stop("Must specify a COUPLINGset object!")
-	
+
 	#print("Checking MSet")
 	if(!is.null(MSet) & class(MSet)=="MEDIPSset"){
 	  if(window_size(MSet)!=window_size(CSet)) stop("MSet and COUPLINGset have different window sizes!")
@@ -28,7 +28,7 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 		if(chr_names(MSet)[i]!=chr_names(CSet)[i]){stop("MSset and COUPLINGset contain different chomosomes!")}
 	  }
 	}
-	
+
 	if(!is.null(MSet) & class(MSet)=="MEDIPSroiSet"){
 		if( length(genome_count(MSet)) != length(genome_CF(CSet)) ){stop("MSet and COUPLINGset have different number of regions of interest!")}
 		if( length(chr_names(MSet)) != length(chr_names(CSet)) ){stop("MSet and COUPLINGset contain a different number of chromosomes!")}
@@ -71,7 +71,7 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 	}
 	coupling=genome_CF(CSet)
 	seq_pattern=seq_pattern(CSet)
-		
+
 	##Calculate calibration curve
 	#####################################
 	if (!is.null(MSet))
@@ -79,27 +79,27 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 	if (!is.null(ISet))
 		ccObj_ISet = MEDIPS.calibrationCurve(MSet=ISet, CSet=CSet, input=T)
 
-		
+
 	##Check, if a subset of chromosomes has been selected
 	######################################################
 	if(plot_chr!="all" & (class(MSet)=="MEDIPSset" | class(ISet)=="MEDIPSset")){
-		cat(paste("Extracting data for",plot_chr, "...\n", sep=" "))
-		
+		message("Extracting data for ", plot_chr, " ...", appendLF=T)
+
 		##Calculate genomic coordinates
 		##################################
 		no_chr_windows = ceiling(chr_lengths/window_size)
-		supersize_chr = cumsum(no_chr_windows)	
+		supersize_chr = cumsum(no_chr_windows)
 		genome_chr = as.vector(seqnames(MEDIPS.GenomicCoordinates(supersize_chr, no_chr_windows, chromosomes, chr_lengths, window_size)))
-				
+
 		if(length(genome_chr[genome_chr==plot_chr])==0){stop("Stated calibration chromosome does not exist within the MEDIPS SET.")}
 		signal = signal[genome_chr==plot_chr]
 		coupling = coupling[genome_chr==plot_chr]
-		cat(paste("Plotting calibration plot for", plot_chr, "...\n", sep=" "))
+		message("Plotting calibration plot for ", plot_chr, " ...", appendLF=T)
 	}
 
 	if(plot_chr!="all" & (class(MSet)=="MEDIPSroiSet" | class(ISet)=="MEDIPSroiSet")){stop("Selecting chromosomes nor supported for regions of interest.")}
 
-	if(plot_chr=="all"){cat("Plotting calibration plot for all chromosomes. It is recommended to redirect the output to a graphic device.\n")}
+	if(plot_chr=="all"){message("Plotting calibration plot for all chromosomes. It is recommended to redirect the output to a graphic device.", appendLF=T)}
 
 	if (!rpkm) {
         	descSignal = "#reads/window"
@@ -130,10 +130,10 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 	    range=c(0,max(ccObj_ISet$mean_signal)*5)
 	}else
 	  range=c(0,max(signal))
-	  
+
 	##Plot
 	#######
-	plot(coupling,signal, pch=".", main=main, ylab=descSignal,ylim=range, xlab=paste(seq_pattern, " coupling factor", sep=""), col="lightblue")		
+	plot(coupling,signal, pch=".", main=main, ylab=descSignal,ylim=range, xlab=paste(seq_pattern, " coupling factor", sep=""), col="lightblue")
 	for(i in 0:max(coupling)){
 	  t=table(signal[coupling==i])
 	  points(x=rep(i,length(t)), y=as.numeric(names(t)),lwd=log(t, 10), pch=4, col="lightblue")
@@ -156,5 +156,5 @@ MEDIPS.plotCalibrationPlot <- function(MSet=NULL, ISet=NULL, CSet=NULL, plot_chr
 	}
 
 	legend("topright", legend=llab, fill=lcol)
-	
+
 }

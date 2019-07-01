@@ -8,10 +8,10 @@
 ##Author:	Lukas Chavez
 
 MEDIPS.rms <- function(MSet=NULL, CSet=NULL, ccObj=NULL){
-	
+
 	signal = genome_count(MSet)
 	coupling = genome_CF(CSet)
-		
+
 	if(is.null(ccObj)){
 		##Calculate calibration curve
 		#####################################
@@ -20,8 +20,8 @@ MEDIPS.rms <- function(MSet=NULL, CSet=NULL, ccObj=NULL){
 
 	##Weight signals by linear regression obtained parameters
 	####################
-	cat("Calculating relative methylation score...\n")
-	
+	message("Calculating relative methylation score...", appendLF=T)
+
         estim=numeric(length(ccObj$mean_signal))
 
 	##For the low range of the calibration curve (< max_index) divide counts by observed mean count
@@ -31,7 +31,7 @@ MEDIPS.rms <- function(MSet=NULL, CSet=NULL, ccObj=NULL){
 	##For the higher range of the calibration curve (>=max_index) divide counts by estimated count
 	high_range=(ccObj$max_index+1):length(estim)
 
-	estim[high_range]=ccObj$intercept + (ccObj$slope * ccObj$coupling_level[high_range]) 
+	estim[high_range]=ccObj$intercept + (ccObj$slope * ccObj$coupling_level[high_range])
 
 	#rms normalization:
 	signal=signal/estim[coupling+1]
@@ -50,12 +50,12 @@ MEDIPS.rms <- function(MSet=NULL, CSet=NULL, ccObj=NULL){
 	signal = log2(signal)
 
 	signal[is.na(signal)] = 0
-				
+
 	##Shift signals into positive value range
 	####################
 	minsignal=min(signal[signal!=-Inf])
 	signal[signal!=-Inf]=signal[signal!=-Inf]+abs(minsignal)
-	
+
 	##Transform values into the interval [0:1] by compressing the top 20% of the signals
 	####################
 	maxsignal = max(signal[signal!=Inf])*0.8

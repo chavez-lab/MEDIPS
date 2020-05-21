@@ -6,7 +6,7 @@
 ##Param:	BSgenome, pattern (character), chromosomes, shift, extend
 ##Output:	CpGenrich results object
 ##Requires:	BSgenome, Biostrings, GenomicRanges, MEDIPS.Bam2GRanges, MEDIPS.txt2Granges, MEDIPS.GenomicCoordinates
-##Modified:	11/10/2012
+##Modified:	05/21/2020
 ##Author:	Joern Dietrich, Lukas Chavez
 
 
@@ -40,10 +40,10 @@ MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e
 	##Calculate CpG density for regions
 	total=length(chromosomes)
 	cat("Calculating CpG density for given regions...\n")  
-	seq=matrix(unlist(IRanges::lapply(RangedData(GRange.Reads),function(x){		
-		i=which(mixedsort(chromosomes)%in%names(x) )
-		ranges(x)<-restrict(ranges(x),end=chr_lengths[which(chromosomes %in% names(x))])
-		y=DNAStringSet(getSeq(dataset, names=space(x), start=start(x), end=end(x), as.character=TRUE))
+	seq=matrix(unlist(IRanges::lapply(GRangesList(GRange.Reads),function(x){		
+		#i=which(mixedsort(chromosomes)%in%names(x) )
+		ranges(x)<-restrict(ranges(x),end=chr_lengths[which(chromosomes %in% as.vector(seqnames(x)))])
+		y=DNAStringSet(getSeq(dataset, names=as.vector(seqnames(x)), start=start(x), end=end(x), as.character=TRUE))
 		c(sum(as.numeric(vcountPattern("CG",y))),sum(as.numeric(vcountPattern("C",y))),sum(as.numeric(vcountPattern("G",y))),sum(as.numeric(width(y))),length(y))
 		}
 	),use.names=F),ncol=5,nrow=total,byrow=T)

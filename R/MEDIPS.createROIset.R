@@ -21,7 +21,7 @@ MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BS
 		
 	if(!fileName%in%dir(path)){stop(paste("File", fileName, " not found in", path, sep =" "))}
 
-	dataset=get(ls(paste("package:", BSgenome, sep="")))
+	dataset = getBSgenome(BSgenome)
 
 	#Check chromosomes in ROI file and in chr.select
 	if(is.null(ROI)){
@@ -56,7 +56,7 @@ MEDIPS.createROIset <- function(file=NULL, ROI=NULL, extend=0, shift=0, bn=1, BS
 				
 	## Get chromosome lengths for all chromosomes within data set.
 	cat(paste("Loading chromosome lengths for ",BSgenome, "...\n", sep=""))		
-	dataset=get(ls(paste("package:", BSgenome, sep="")))
+	dataset = getBSgenome(BSgenome)
 	chr_lengths=as.numeric(seqlengths(dataset)[chromosomes])	
 
 	## Create the ROI Granges object	

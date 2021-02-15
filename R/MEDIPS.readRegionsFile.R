@@ -242,7 +242,7 @@ getMObjectFromWIG <- function(fileName, path, chr.select=NULL,BSgenome){
 	  chr.select=names(seqlengths(wiggle))
 	}
 	
-	dataset=get(ls(paste("package:", BSgenome, sep="")))
+	dataset = getBSgenome(BSgenome)
 	chr_lengths=as.numeric(seqlengths(dataset)[chr.select])
 	genome_count=values(wiggle)[,1]
 	window_size=width(wiggle)[1]

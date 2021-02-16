@@ -21,7 +21,7 @@ function(file=NULL, BSgenome=NULL, pattern="CG", extend=0, shift=0, uniq=1e-3, c
 	if(path==""){path=getwd()}		
 	if(!fileName%in%dir(path)){stop(paste("File", fileName, " not found in", path, sep =" "))}
 	
-	dataset=get(ls(paste("package:", BSgenome, sep="")))
+	dataset = getBSgenome(BSgenome)
 	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, dataset, uniq, ROI = NULL, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)}
 	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, dataset, uniq, ROI = NULL, isSecondaryAlignment = isSecondaryAlignment, simpleCigar=simpleCigar)}
 		

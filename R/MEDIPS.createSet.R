@@ -26,7 +26,7 @@ function (file = NULL, extend = 0, shift = 0, window_size = 300,
     if (path == "") {
         path = getwd()
     }
-    dataset = get(ls(paste("package:", BSgenome, sep = "")))
+    dataset = getBSgenome(BSgenome)
     if (is.null(chr.select)) {
         cat("All chromosomes in the reference BSgenome will be processed:\n")
         chr.select = seqnames(dataset)

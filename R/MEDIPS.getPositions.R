@@ -15,8 +15,7 @@ MEDIPS.getPositions <-function(BSgenome=NULL, pattern=NULL, chromosomes=NULL){
 	currentchr=NULL
 	currentstart=NULL
 	
-	organism=ls(paste("package:", BSgenome, sep=""))
-	genomedata=get(organism)
+	genomedata = getBSgenome(BSgenome)
 	
 	##Determine pattern positions by accessing Biostrings
 	for(chromosome in chromosomes){

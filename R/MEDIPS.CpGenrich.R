@@ -21,7 +21,7 @@ MEDIPS.CpGenrich <-function(file=NULL, BSgenome=NULL, extend=0, shift=0, uniq=1e
 	if(path==""){path=getwd()}		
 	if(!fileName%in%dir(path)){stop(paste("File", fileName, " not found in", path, sep =" "))}	
 
-	dataset = get(ls(paste("package:", BSgenome, sep = "")))	
+	dataset = getBSgenome(BSgenome)	
 
 	if(!paired){GRange.Reads = getGRange(fileName, path, extend, shift, chr.select, dataset, uniq)}
 	else{GRange.Reads = getPairedGRange(fileName, path, extend, shift, chr.select, dataset, uniq)}
